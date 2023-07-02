@@ -1,0 +1,14 @@
+.history/*
+OPC-UA.log
+tcpdevice2ppmpconnector/__pycache__/*
+**/.pytest_cache/*
+.vscode/*
+tcpdevice2ppmpconnector/.history/**
+config.ini
+build/**
+tcpdevice2ppmpconnector.egg-info/**
+dist/*.whl
+__pycache__/**
+dist/**
+tcpdevice2ppmpconnector-env/**
+logs/**
