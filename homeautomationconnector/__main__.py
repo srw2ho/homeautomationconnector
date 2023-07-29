@@ -37,7 +37,9 @@ from tomlconfig.tomlutils import TomlParser
 from statistics import mean, median
 
 import statistics
+from homeautomationconnector.daikindevice.daikin import DaikinDevice
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
+from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 
 from homeautomationconnector.processbase import ProcessBase
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
@@ -92,6 +94,8 @@ logger.addHandler(fl)
 
 
 def main():
+
+              
     deviceConfig: dict = {
         "mqtt.host": MQTT_HOST,
         "mqtt.port": MQTT_PORT,
@@ -99,7 +103,7 @@ def main():
         "mqtt.password": MQTT_PASSWORD,
         "mqtt.tls_cert": MQTT_TLS_CERT,
         "mqtt.mqtt_devicename": "mqtt_devicename",
-        "DeviceServiceNames": ["SDM630_1"],
+        "DeviceServiceNames": ["SDM630_WR","SDM630_WP","SDM630_WB","DaikinWP"],
         "LoggingLevel": 1,
     }
 
@@ -107,25 +111,46 @@ def main():
         deviceKey="ServiceDeviceClient", deviceConfig=deviceConfig
     )
 
-    processBase = ProcessBase(["SDM630_1"], mqttServiceDeviceClient)
+    
+    # Wechselrichter SDM
+    SDM630_WR = SDM630Device("SDM630_WR", mqttServiceDeviceClient)
+    # Wärmepumpe SDM
+    SDM630_WP = SDM630Device("SDM630_WP", mqttServiceDeviceClient)
+        
+    # Wallbox SDM
+    SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
+    
+    GrowattWr = GrowattDevice("GrowattWR", mqttServiceDeviceClient)
+    # Wallbox SDM
+    kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
+
+    DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
+    
+    RefreshTime: int = 2
+    useddevices:dict = {}
+    useddevices["SDM630_WR"] = SDM630_WR
+    useddevices["SDM630_WP"] = SDM630_WP
+    useddevices["DaikinWP"] = DaikinWP
+    # useddevices["SDM630_WB"] = SDM630_WB
+    # useddevices["GrowattWr"] = GrowattWr
+    # useddevices["kebaWallbox"] = kebaWallbox
+    
+    processBase = ProcessBase(useddevices, mqttServiceDeviceClient)
 
     processBase.doWaitForInitialized()
     processBase.subScribeTopics()
+    processBase.setUsedDevices()
 
-    sdm630Device = SDM630Device("SDM630_1", mqttServiceDeviceClient)
-    growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
- 
-    
-    RefreshTime: int = 2
+
     while True:
-        importedenergie = sdm630Device.get_import_energy_active()
-        totalenergie = sdm630Device.get_total_power_active()
+        importedenergie = SDM630_WR.get_import_energy_active()
+        totalenergie = SDM630_WR.get_total_power_active()
 
-        l12_voltage = sdm630Device.get_l12_voltage()
-        l23_voltage = sdm630Device.get_l23_voltage()
-        l31_voltage = sdm630Device.get_l31_voltage()
+        l12_voltage = SDM630_WR.get_l12_voltage()
+        l23_voltage = SDM630_WR.get_l23_voltage()
+        l31_voltage = SDM630_WR.get_l31_voltage()
 
-        serialnumber = sdm630Device.get_serial_number()
+        serialnumber = SDM630_WR.get_serial_number()
         processBase.doProcess()
 
         time.sleep(RefreshTime)
