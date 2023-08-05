@@ -1,4 +1,5 @@
 from homeautomationconnector.modbusdevicebase import ModBusDeviceBase
+
 # from homeautomationconnector.processbase import ProcessBase
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 
@@ -7,7 +8,7 @@ class GrowattDevice(ModBusDeviceBase):
     def __init__(
         self, deviceKey: str = "", mqttDeviceClient: MQTTServiceDeviceClient = None
     ):
-        super().__init__(deviceKey,mqttDeviceClient)
+        super().__init__(deviceKey, mqttDeviceClient)
         # self.m_mqttDeviceClient: MQTTServiceDeviceClient = mqttDeviceClient
         # self.m_deviceKey: str = deviceKey
         # self.m_writewithNotify: bool = True
@@ -83,6 +84,57 @@ class GrowattDevice(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
+    def get_Vac2(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Vac2"))
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Iac2(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Iac2"))
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Pac2(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Pac2"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Vac3(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Vac3"))
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Iac3(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Iac3"))
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Pac3(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Pac3"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+
+    def get_Vac_RS(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Vac_RS"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+    def get_Vac_ST(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Vac_ST"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Vac_TR(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Vac_TR"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
     def get_Eactoday(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Eactoday"))
 
@@ -133,6 +185,20 @@ class GrowattDevice(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
+    def get_PTemp2(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("PTemp2"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+
+    def get_PTemp3(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("PTemp3"))
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+        
     def get_uwSysWorkMode(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("uwSysWorkMode")
@@ -167,9 +233,9 @@ class GrowattDevice(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Pactouser(self) -> float:
+    def get_Pactouser_total(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
-            self.getKeyByDeviceName("Pactouser")
+            self.getKeyByDeviceName("Pactouser_total")
         )
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
@@ -201,20 +267,70 @@ class GrowattDevice(ModBusDeviceBase):
 
     def get_Pactogrid_total(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
-            self.getKeyByDeviceName("Pactogrid total")
+            self.getKeyByDeviceName("Pactogrid_total")
         )
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_LocalLoad_total(self) -> float:
+    def get_PLocalLoad_total(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
-            self.getKeyByDeviceName("LocalLoad total")
+            self.getKeyByDeviceName("PLocalLoad_total")
         )
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
+    def get_Pactogrid_R(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("Pactogrid_R")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_Pactogrid_S(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("Pactogrid_S")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+    def get_Pactogrid_T(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("Pactogrid_T")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
+    def get_PLocalLoad_R(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("PLocalLoad_R")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+    def get_PLocalLoad_S(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("PLocalLoad_S")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+    def get_PLocalLoad_T(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("PLocalLoad_T")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+    
+    
+                
     def get_Etouser_today(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Etouser_today")
@@ -303,6 +419,16 @@ class GrowattDevice(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
+    def get_BMS_StatusOld(self) -> int:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("BMS_StatusOld")
+        )
+
+    def get_BMS_ErrorOld(self) -> int:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("BMS_ErrorOld")
+        )
+
     def get_BMS_Status(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("BMS_Status")
@@ -362,6 +488,15 @@ class GrowattDevice(ModBusDeviceBase):
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
+
+    def get_BMS_MaxCurrent(self) -> int:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("BMS_MaxCurrent")
+        )
+
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val
+
 
     def get_BMS_SOH(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("BMS_SOH"))
