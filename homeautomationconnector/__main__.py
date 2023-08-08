@@ -103,7 +103,7 @@ def main():
         "mqtt.password": MQTT_PASSWORD,
         "mqtt.tls_cert": MQTT_TLS_CERT,
         "mqtt.mqtt_devicename": "mqtt_devicename",
-        "DeviceServiceNames": ["SDM630_WR","SDM630_WP","SDM630_WB","DaikinWP"],
+        "DeviceServiceNames": ["SDM630_WR","SDM630_WP","SDM630_WB","DaikinWP","SPH_TL3_BH_UP"],
         "LoggingLevel": 1,
     }
 
@@ -120,7 +120,8 @@ def main():
     # Wallbox SDM
     SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
     
-    GrowattWr = GrowattDevice("GrowattWR", mqttServiceDeviceClient)
+    # Growatt Inverter SPH_TL3_BH_UP
+    SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
     # Wallbox SDM
     kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
 
@@ -131,6 +132,7 @@ def main():
     useddevices["SDM630_WR"] = SDM630_WR
     useddevices["SDM630_WP"] = SDM630_WP
     useddevices["DaikinWP"] = DaikinWP
+    useddevices["SPH_TL3_BH_UP"] = SPH_TL3_BH_UP
     # useddevices["SDM630_WB"] = SDM630_WB
     # useddevices["GrowattWr"] = GrowattWr
     # useddevices["kebaWallbox"] = kebaWallbox

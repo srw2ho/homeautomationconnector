@@ -13,21 +13,21 @@ class KeykontactP30(ModBusDeviceBase):
         # self.m_writewithNotify: bool = True
 
     # readable HoldingRegisters
-    def get_Charging_State(self) -> float:
+    def get_Charging_State(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Charging_State")
         )
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Cable_State(self) -> float:
+    def get_Cable_State(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Cable_State")
         )
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_EVSE_Error_Code(self) -> float:
+    def get_EVSE_Error_Code(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("EVSE_Error_Code")
         )
@@ -55,21 +55,21 @@ class KeykontactP30(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Serial_Number(self) -> float:
+    def get_Serial_Number(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Serial_Number")
         )
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Product_Type(self) -> float:
+    def get_Product_Type(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Product_Type")
         )
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Firmware_Version(self) -> float:
+    def get_Firmware_Version(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Firmware_Version")
         )
@@ -153,7 +153,7 @@ class KeykontactP30(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Phase_Switching_Source(self) -> float:
+    def get_Phase_Switching_Source(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Phase_Switching_Source")
         )
@@ -161,7 +161,7 @@ class KeykontactP30(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_Phase_Switching_State(self) -> float:
+    def get_Phase_Switching_State(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Phase_Switching_State")
         )
@@ -177,13 +177,15 @@ class KeykontactP30(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_total_energy_reactive(self) -> float:
+
+    def get_Failsafe_Timeout_Setting(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
-            self.getKeyByDeviceName("total_energy_reactive")
+            self.getKeyByDeviceName("Failsafe_Timeout_Setting")
         )
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
+    
 
     def set_Set_Charging_Current(self, value) -> int:
         ret = self.m_mqttDeviceClient.writeValueByKey(

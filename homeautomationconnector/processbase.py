@@ -19,7 +19,7 @@ class ProcessBase(object):
         self.m_SDM630_WR: SDM630Device = None
         self.m_SDM630_WP: SDM630Device = None
         self.m_SDM630_WB: SDM630Device = None
-        self.m_GrowattWr: GrowattDevice = None
+        self.m_SPH_TL3_BH_UP: GrowattDevice = None
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
 
@@ -34,15 +34,86 @@ class ProcessBase(object):
     #   sdm630Device = SDM630Device("SDM630_1", mqttServiceDeviceClient)
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
+    def getProcessValues(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
+            self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
+            self._SPH_TL3_BH_UP_Pactogrid_total = (
+                self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
+            )
+            self._SPH_TL3_BH_UP_PLocalLoad_total = (
+                self.m_SPH_TL3_BH_UP.get_PLocalLoad_total()
+            )
+            self._SPH_TL3_BH_UP_Pdischarge1 = self.m_SPH_TL3_BH_UP.get_Pdischarge1()
+            self._SPH_TL3_BH_UP_Pcharge1 = self.m_SPH_TL3_BH_UP.get_Pcharge1()
+            self._SPH_TL3_BH_UP_SOC = self.m_SPH_TL3_BH_UP.get_BMS_SOC()
+            self._SPH_TL3_BH_UP_SOC_Min = self.m_SPH_TL3_BH_UP.get_SOC_Min()
+            self._SPH_TL3_BH_UP_Inverter_Status = (
+                self.m_SPH_TL3_BH_UP.get_Inverter_Status()
+            )
+
+        if self.m_SDM630_WR != None:
+            self._SDM630_WR_total_power_active = (
+                self.m_SDM630_WR.get_total_power_active()
+            )
+
+        if self.m_SDM630_WP != None:
+            self._SDM630_WP_total_power_active = (
+                self.m_SDM630_WP.get_total_power_active()
+            )
+
+        if self.m_DaikinWP != None:
+            self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
+            self._DaikinWP_WATER_temperature = self.m_DaikinWP.get_WATER_temperature()
+            self._DaikinWP_WATER_turn_on = self.m_DaikinWP.get_WATER_turn_on()
+            self._DaikinWP_CLIMATE_turn_on = self.m_DaikinWP.get_CLIMATE_turn_on()
+            self._DaikinWP_WATER_target_temperature = (
+                self.m_DaikinWP.get_WATER_target_temperature()
+            )
+            self._DaikinWP_CLIMATE_target_temperature = (
+                self.m_DaikinWP.get_CLIMATE_target_temperature()
+            )
+            self._DaikinWP_CLIMATE_temperature = (
+                self.m_DaikinWP.get_CLIMATE_temperature()
+            )
+            self._DaikinWP_CLIMATE_temperature = (
+                self.m_DaikinWP.get_CLIMATE_temperature()
+            )
+            self._DaikinWP_Sensor_OutsideTemperature = (
+                self.m_DaikinWP.get_Sensor_OutsideTemperature()
+            )
+            self._DaikinWP_Sensor_LeavingWaterTemperatur = (
+                self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
+            )
+
+    def doProcess_KebaWallbox(self):
+        pass
+
+    def doProcess_DaikinWP(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
+            self._SPH_TL3_BH_UP_Pactogrid_total = (
+                self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
+            )
+            self._SPH_TL3_BH_UP_PLocalLoad_total = (
+                self.m_SPH_TL3_BH_UP.get_PLocalLoad_total()
+            )
+            self._SPH_TL3_BH_UP_Pdischarge1 = self.m_SPH_TL3_BH_UP.get_Pdischarge1()
+            self._SPH_TL3_BH_UP_Pcharge1 = self.m_SPH_TL3_BH_UP.get_Pcharge1()
+
+        pass
+
     def doProcess(self):
+        self.getProcessValues()
+
         if self.m_SDM630_WR != None:
             energy_active = self.m_SDM630_WR.get_l1_export_energy_active()
 
         if self.m_SDM630_WP != None:
             energy_active = self.m_SDM630_WP.get_l1_export_energy_active()
 
-        if self.m_GrowattWr != None:
-            P_rate = self.m_GrowattWr.get_Active_P_Rate()
+        if self.m_SPH_TL3_BH_UP != None:
+            P_rate = self.m_SPH_TL3_BH_UP.get_Active_P_Rate()
 
         if self.m_kebaWallbox != None:
             charging_state = self.m_kebaWallbox.get_Charging_State()
@@ -70,12 +141,12 @@ class ProcessBase(object):
         if "SDM630_WB" in self.m_useddevices:
             self.m_SDM630_WB = self.m_useddevices["SDM630_WB"]
 
-        if "GrowattWr" in self.m_useddevices:
-            self.m_GrowattWr = self.m_useddevices["GrowattWr"]
+        if "SPH_TL3_BH_UP" in self.m_useddevices:
+            self.m_SPH_TL3_BH_UP = self.m_useddevices["SPH_TL3_BH_UP"]
 
         if "kebaWallbox" in self.m_useddevices:
             self.m_kebaWallbox = self.m_useddevices["kebaWallbox"]
-        
+
         if "DaikinWP" in self.m_useddevices:
             self.m_DaikinWP = self.m_useddevices["DaikinWP"]
 

@@ -344,6 +344,7 @@ class DaikinDevice(ModBusDeviceBase):
         return val
 
     
+
     def get_WATER_tank_state(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.tank_state")
@@ -366,12 +367,6 @@ class DaikinDevice(ModBusDeviceBase):
         )
         return ret
 
-    def get_WATER_target_temperature(self) -> float:
-        ret = self.m_mqttDeviceClient.getValueByKey(
-            self.getKeyByDeviceName("WATER.min_temp")
-        )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
-        return val  
 
     def get_WATER_min_temp(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
@@ -399,4 +394,18 @@ class DaikinDevice(ModBusDeviceBase):
             self.getKeyByDeviceName("WATER.operation_list")
         )
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
-        return val                                                                                                                                                                                                                                                                             
+        return val   
+    
+    def get_WATER_turn_on(self) -> bool:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("WATER.turn_on")
+        )
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val     
+    
+    def get_CLIMATE_turn_on(self) -> bool:
+        ret = self.m_mqttDeviceClient.getValueByKey(
+            self.getKeyByDeviceName("CLIMATE.turn_on")
+        )
+        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        return val                                                                                                                                                                                                                                                                                  
