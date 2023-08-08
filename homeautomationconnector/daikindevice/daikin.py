@@ -279,7 +279,7 @@ class DaikinDevice(ModBusDeviceBase):
         )
         return ret
 
-    def get_CLIMATE_temperature(self) -> str:
+    def get_CLIMATE_temperature(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.temperature")
         )
