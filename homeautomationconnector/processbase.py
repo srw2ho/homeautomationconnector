@@ -1,7 +1,9 @@
 import time
+from tomlconfig.tomlutils import TomlParser
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 from ppmpmessage.v3.device_state import DeviceState
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
+from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
@@ -9,7 +11,10 @@ from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 
 class ProcessBase(object):
     def __init__(
-        self, useddevices: dict = [], mqttDeviceClient: MQTTServiceDeviceClient = None
+        self,
+        useddevices: dict = [],
+        mqttDeviceClient: MQTTServiceDeviceClient = None,
+        tomlParser: TomlParser = None,
     ):
         self.m_useddevices: dict = useddevices
         self.m_mqttDeviceClient: MQTTServiceDeviceClient = mqttDeviceClient
@@ -22,6 +27,14 @@ class ProcessBase(object):
         self.m_SPH_TL3_BH_UP: GrowattDevice = None
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
+        self.m_GPIODevice: GPIODevice = GPIODevice("GPIODevice")
+        self.m_tomlParser = tomlParser
+        self.m_INVERTER_TEMPERATURE_FAN_ON = self.m_tomlParser.get(
+            "homeautomation.INVERTER_TEMPERATURE_FAN_ON", 38
+        )
+        self.m_INVERTER_TEMPERATURE_FAN_OFF = self.m_tomlParser.get(
+            "homeautomation.INVERTER_TEMPERATURE_FAN_OFF", 35
+        )
 
     def notifyInfoStateFunction(self, hostname: str = "", infostate: str = ""):
         if infostate == DeviceState.OK.value:
@@ -37,6 +50,9 @@ class ProcessBase(object):
     def getProcessValues(self):
         if self.m_SPH_TL3_BH_UP != None:
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
+            self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
+            self._SPH_TL3_BH_UP_Ppv1 = self.m_SPH_TL3_BH_UP.get_Ppv1()
+            self._SPH_TL3_BH_UP_Ppv2 = self.m_SPH_TL3_BH_UP.get_Ppv2()
             self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
             self._SPH_TL3_BH_UP_Pactogrid_total = (
                 self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
@@ -51,6 +67,10 @@ class ProcessBase(object):
             self._SPH_TL3_BH_UP_Inverter_Status = (
                 self.m_SPH_TL3_BH_UP.get_Inverter_Status()
             )
+            self._SPH_TL3_BH_UP_Temp1 = self.m_SPH_TL3_BH_UP.get_Temp1()
+            self._SPH_TL3_BH_UP_Temp2 = self.m_SPH_TL3_BH_UP.get_Temp2()
+
+            self._SPH_TL3_BH_UP_Temp3 = self.m_SPH_TL3_BH_UP.get_Temp3()
 
         if self.m_SDM630_WR != None:
             self._SDM630_WR_total_power_active = (
@@ -89,6 +109,18 @@ class ProcessBase(object):
     def doProcess_KebaWallbox(self):
         pass
 
+    def doProcess_InverterTemperature(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            # 0 == not in Subscibe List
+            if self._SPH_TL3_BH_UP_Temp1 != 0:
+                if self._SPH_TL3_BH_UP_Temp1 >= self.m_INVERTER_TEMPERATURE_FAN_ON:
+                    self.m_GPIODevice.switch_Fan(True)
+
+                if self._SPH_TL3_BH_UP_Temp1 <= self.m_INVERTER_TEMPERATURE_FAN_OFF:
+                    self.m_GPIODevice.switch_Fan(False)
+
+        pass
+
     def doProcess_DaikinWP(self):
         if self.m_SPH_TL3_BH_UP != None:
             self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
@@ -105,6 +137,8 @@ class ProcessBase(object):
 
     def doProcess(self):
         self.getProcessValues()
+
+        self.doProcess_InverterTemperature()
 
         if self.m_SDM630_WR != None:
             energy_active = self.m_SDM630_WR.get_l1_export_energy_active()

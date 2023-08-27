@@ -16,6 +16,9 @@ homeautomationconnector-env/**
 logs/**
 
 
+
+homeautomationconnector/gpiodevice/__pycache__/gpiodevice.cpython-39.pyc
 homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
-homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
-homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
+homeautomationconnector/kebawallboxdevice/__pycache__/keykontactP30.cpython-39.pyc
+
+

@@ -1,0 +1,126 @@
+# import RPi.GPIO as GPIO
+import logging
+from gpiozero import (
+    Button,
+    LED,
+    TimeOfDay,
+    PWMOutputDevice,
+    CPUTemperature,
+    GPIOZeroError,
+    PingServer,
+)
+from datetime import time
+from signal import pause
+
+# import RPi.GPIO
+# import time
+
+logger = logging.getLogger("root")
+
+UNIT_TIME = 0.25
+PIN = 21
+VERBOSE = True
+FREQUENCY = 100
+PWM_CHANNEL = 1
+
+
+class GPIODevice(object):
+    def __init__(self, devkey: str = ""):
+        self.m_deviceKey = devkey
+        self.initialize_gpio()
+
+    def initialize_gpio(self):
+        try:
+            # Input to
+            self._button_16 = Button(pull_up=None, active_state=False, pin=16)
+            self._button_17 = Button(pull_up=None, active_state=False, pin=17)
+            self._button_22 = Button(pull_up=None, active_state=False, pin=22)
+            self._button_23 = Button(pull_up=None, active_state=False, pin=23)
+            self._button_24 = Button(pull_up=None, active_state=False, pin=24)
+            self._button_25 = Button(pull_up=None, active_state=False, pin=25)
+            self._button_26 = Button(pull_up=None, active_state=False, pin=26)
+            self._button_27 = Button(pull_up=None, active_state=False, pin=27)
+
+            self._led_07 = LED(pin=7)
+            self._led_08 = LED(pin=8)
+            self._led_09 = LED(pin=9)
+            self._led_11 = LED(pin=11)
+            #
+            self._led_10 = LED(pin=10)
+            self._led_12 = LED(pin=12)
+            self._led_13 = LED(pin=13)
+
+            self._led_11.blink()
+
+            self._tod = TimeOfDay(
+                time(hour=18, minute=24), time(hour=18, minute=30), utc=True
+            )
+
+            self._tod.when_activated = self.begin_day
+            self._tod.when_deactivated = self.end_day
+
+            self._cpuTemp = CPUTemperature(
+                event_delay=5, min_temp=35, max_temp=55, threshold=42.5
+            )
+            self._cpuTemp.when_activated = self.CPUTempActivate
+            self._cpuTemp.when_deactivated = self.CPUTempDeactivate
+
+            self._PingServer = PingServer("google.com", event_delay=10)
+            self._PingServer.when_activated = self.PingServerActivated
+            self._PingServer.when_deactivated = self.PingServerDeactivated
+
+            logger.info(f"CPU-Temperature = {self._cpuTemp.temperature} °C")
+            # pause()
+
+        except GPIOZeroError as e:
+            logger.error("doBearerRequest-REQUEST FAILED: %s", e)
+
+    def switch_Fan(self, state: bool) -> bool:
+        if state:
+            if not self._led_07.is_active:
+                self._led_07.on()
+        else:
+            if self._led_07.is_active:
+                self._led_07.off()
+
+        return self._led_07.is_active
+
+    def initialize_pwm(self):
+        pass
+        # p = GPIO.PWM(PWM_CHANNEL, FREQUENCY)
+        # p.start(100)
+        # p.ChangeFrequency(freq)
+        # p.ChangeDutyCycle(dc)
+
+    def PingServerActivated(self):
+        logger.info(f"PingServerActivated:")
+        pass
+
+    def PingServerDeactivated(self):
+        logger.info(f"PingServerDeActivated:")
+        pass
+
+    def begin_day(self):
+        logger.info(f"Start-New Day:")
+        pass
+
+    def end_day(self):
+        logger.info(f"End-New Day:")
+
+    def begin_day(self):
+        logger.info(f"Start-New Day:")
+        pass
+
+    def end_day(self):
+        logger.info(f"End-New Day:")
+
+    def CPUTempActivate(self):
+        logger.error(
+            f"CPUTempActivate: Temperature:{self._cpuTemp.temperature} °C, % = {self._cpuTemp.value}"
+        )
+        pass
+
+    def CPUTempDeactivate(self):
+        logger.error(
+            f"CPUTempDeActivate: Temperature:{self._cpuTemp.temperature} °C, % = {self._cpuTemp.value}"
+        )

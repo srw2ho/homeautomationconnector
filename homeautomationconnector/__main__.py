@@ -38,11 +38,15 @@ from statistics import mean, median
 
 import statistics
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
+from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 
 from homeautomationconnector.processbase import ProcessBase
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
+# from homeautomationconnector.gpiodevice import G
+
+# from gpiozero import Button, LED
 
 MQTT_TOPIC_PPMP = "mh" + "/+/" + "ppmp"
 
@@ -75,9 +79,12 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+
+
 try:
-    os.mkdir(LOGFOLDER)
-    logger.info(f"create logfolder: {LOGFOLDER}")
+    if not os.path.exists(LOGFOLDER):
+        os.mkdir(LOGFOLDER)
+        logger.info(f"create logfolder: {LOGFOLDER}")
 except OSError as error:
     logger.info(f"create logfolder: {LOGFOLDER}:{error}")
 # fl = logging.FileHandler('OPC-UA.log')
@@ -94,8 +101,6 @@ logger.addHandler(fl)
 
 
 def main():
-
-              
     deviceConfig: dict = {
         "mqtt.host": MQTT_HOST,
         "mqtt.port": MQTT_PORT,
@@ -103,7 +108,13 @@ def main():
         "mqtt.password": MQTT_PASSWORD,
         "mqtt.tls_cert": MQTT_TLS_CERT,
         "mqtt.mqtt_devicename": "mqtt_devicename",
-        "DeviceServiceNames": ["SDM630_WR","SDM630_WP","SDM630_WB","DaikinWP","SPH_TL3_BH_UP"],
+        "DeviceServiceNames": [
+            "SDM630_WR",
+            "SDM630_WP",
+            # "SDM630_WB",
+            "DaikinWP",
+            "SPH_TL3_BH_UP",
+        ],
         "LoggingLevel": 1,
     }
 
@@ -111,24 +122,25 @@ def main():
         deviceKey="ServiceDeviceClient", deviceConfig=deviceConfig
     )
 
-    
     # Wechselrichter SDM
     SDM630_WR = SDM630Device("SDM630_WR", mqttServiceDeviceClient)
     # Wärmepumpe SDM
     SDM630_WP = SDM630Device("SDM630_WP", mqttServiceDeviceClient)
-        
+
     # Wallbox SDM
     SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
-    
+
     # Growatt Inverter SPH_TL3_BH_UP
     SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
     # Wallbox SDM
     kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
 
     DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
-    
+    # gpioDevice = GPIODevice("GPIODevice")
+        
+
     RefreshTime: int = 2
-    useddevices:dict = {}
+    useddevices: dict = {}
     useddevices["SDM630_WR"] = SDM630_WR
     useddevices["SDM630_WP"] = SDM630_WP
     useddevices["DaikinWP"] = DaikinWP
@@ -136,23 +148,23 @@ def main():
     # useddevices["SDM630_WB"] = SDM630_WB
     # useddevices["GrowattWr"] = GrowattWr
     # useddevices["kebaWallbox"] = kebaWallbox
-    
-    processBase = ProcessBase(useddevices, mqttServiceDeviceClient)
+
+    processBase = ProcessBase(useddevices, mqttServiceDeviceClient,toml)
 
     processBase.doWaitForInitialized()
     processBase.subScribeTopics()
     processBase.setUsedDevices()
-
+    
 
     while True:
-        importedenergie = SDM630_WR.get_import_energy_active()
-        totalenergie = SDM630_WR.get_total_power_active()
+        # importedenergie = SDM630_WR.get_import_energy_active()
+        # totalenergie = SDM630_WR.get_total_power_active()
 
-        l12_voltage = SDM630_WR.get_l12_voltage()
-        l23_voltage = SDM630_WR.get_l23_voltage()
-        l31_voltage = SDM630_WR.get_l31_voltage()
+        # l12_voltage = SDM630_WR.get_l12_voltage()
+        # l23_voltage = SDM630_WR.get_l23_voltage()
+        # l31_voltage = SDM630_WR.get_l31_voltage()
 
-        serialnumber = SDM630_WR.get_serial_number()
+        # serialnumber = SDM630_WR.get_serial_number()
         processBase.doProcess()
 
         time.sleep(RefreshTime)

@@ -179,21 +179,21 @@ class GrowattDevice(ModBusDeviceBase):
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_PTemp1(self) -> float:
-        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("PTemp1"))
+    def get_Temp1(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Temp1"))
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
-    def get_PTemp2(self) -> float:
-        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("PTemp2"))
+    def get_Temp2(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Temp2"))
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
 
-    def get_PTemp3(self) -> float:
-        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("PTemp3"))
+    def get_Temp3(self) -> float:
+        ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("Temp3"))
 
         val = 0 if ret == None else ret  # Requires Python version >= 2.5
         return val

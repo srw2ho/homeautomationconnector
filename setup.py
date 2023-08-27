@@ -4,7 +4,8 @@ import setuptools
 NAME = "homeautomationconnector"
 
 DEPENDENCIES_ARTIFACTORY = [
-    # "msgpack"
+    "gpiozero",
+    "RPi.GPIO"
 ]
 
 
