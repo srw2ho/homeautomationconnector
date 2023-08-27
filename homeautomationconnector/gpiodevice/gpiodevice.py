@@ -23,6 +23,25 @@ VERBOSE = True
 FREQUENCY = 100
 PWM_CHANNEL = 1
 
+# Pin-Belegung
+# INPUT Relais:
+    # B1 -> IO27
+    # B2 -> IO17
+    # B3 -> IO24
+    # B4 -> IO16
+    
+# 4 fach Relais:
+    # IN1-> IO07 (WP SmartGrid_0)
+    # IN2-> IO08 (WP SmartGrid_2)
+    # IN3-> IO13 (FAN)
+    # IN4-> IO09
+
+
+# 8 fach Treiber
+    # IB->IO10
+    # 2B-> IO12
+    # 3B->IO13
+
 
 class GPIODevice(object):
     def __init__(self, devkey: str = ""):
@@ -77,13 +96,13 @@ class GPIODevice(object):
 
     def switch_Fan(self, state: bool) -> bool:
         if state:
-            if not self._led_07.is_active:
-                self._led_07.on()
+            if not self._led_13.is_active:
+                self._led_13.on()
         else:
-            if self._led_07.is_active:
-                self._led_07.off()
+            if self._led_13.is_active:
+                self._led_13.off()
 
-        return self._led_07.is_active
+        return self._led_13.is_active
 
     def initialize_pwm(self):
         pass

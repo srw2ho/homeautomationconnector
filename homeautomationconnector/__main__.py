@@ -41,9 +41,11 @@ from homeautomationconnector.daikindevice.daikin import DaikinDevice
 from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
+from homeautomationconnector.modbusdevicebase import ModBusDeviceBase
 
 from homeautomationconnector.processbase import ProcessBase
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
+
 # from homeautomationconnector.gpiodevice import G
 
 # from gpiozero import Button, LED
@@ -64,6 +66,8 @@ MQTT_PASSWORD = toml.get("mqtt.password", "")
 MQTT_TLS_CERT = toml.get("mqtt.tls_cert", "")
 
 
+MQTTDEVICELIST = toml.get("mqttdevices.DEVICELIST", [""])
+
 LOGFOLDER = "./logs/"
 
 
@@ -78,7 +82,6 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-
 
 
 try:
@@ -99,6 +102,50 @@ logger.addHandler(fl)
 
 # list of all OPC-UA client processes
 
+# def http_error(status):
+#     match status:
+# case 400:
+# return "Bad request"
+# case 404:
+# return "Not found"
+# case 418:
+# return "I'm a teapot"
+
+# # If an exact match is not confirmed, this last case will be used if provided
+# case _:
+# return "Something's wrong with the internet"
+
+
+def createDeviceByKey(
+    key: str, mqttServiceDeviceClient: MQTTServiceDeviceClient
+) -> ModBusDeviceBase:
+    # Wechselrichter SDM
+    if key == "SDM630_WR":
+        SDM630_WR = SDM630Device("SDM630_WR", mqttServiceDeviceClient)
+        return SDM630_WR
+    # Wärmepumpe SDM
+    if key == "SDM630_WP":
+        SDM630_WP = SDM630Device("SDM630_WP", mqttServiceDeviceClient)
+        return SDM630_WP
+
+    # Wallbox SDM
+    if key == "SDM630_WB":
+        SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
+        return SDM630_WB
+
+    # Growatt Inverter SPH_TL3_BH_UP
+    if key == "SPH_TL3_BH_UP":
+        SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
+        return SPH_TL3_BH_UP
+    # Wallbox SDM
+    if key == "kebaWallbox":
+        kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
+        return kebaWallbox
+    if key == "DaikinWP":
+        DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
+        return DaikinWP
+    
+    return None
 
 def main():
     deviceConfig: dict = {
@@ -108,13 +155,7 @@ def main():
         "mqtt.password": MQTT_PASSWORD,
         "mqtt.tls_cert": MQTT_TLS_CERT,
         "mqtt.mqtt_devicename": "mqtt_devicename",
-        "DeviceServiceNames": [
-            "SDM630_WR",
-            "SDM630_WP",
-            # "SDM630_WB",
-            "DaikinWP",
-            "SPH_TL3_BH_UP",
-        ],
+        "DeviceServiceNames": MQTTDEVICELIST,
         "LoggingLevel": 1,
     }
 
@@ -137,24 +178,27 @@ def main():
 
     DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
     # gpioDevice = GPIODevice("GPIODevice")
-        
 
     RefreshTime: int = 2
-    useddevices: dict = {}
-    useddevices["SDM630_WR"] = SDM630_WR
-    useddevices["SDM630_WP"] = SDM630_WP
-    useddevices["DaikinWP"] = DaikinWP
-    useddevices["SPH_TL3_BH_UP"] = SPH_TL3_BH_UP
+
+    useddevices: dict = {
+        device: createDeviceByKey(device, mqttServiceDeviceClient)
+        for device in MQTTDEVICELIST
+    }
+
+    # useddevices["SDM630_WR"] = SDM630_WR
+    # useddevices["SDM630_WP"] = SDM630_WP
+    # useddevices["DaikinWP"] = DaikinWP
+    # useddevices["SPH_TL3_BH_UP"] = SPH_TL3_BH_UP
     # useddevices["SDM630_WB"] = SDM630_WB
     # useddevices["GrowattWr"] = GrowattWr
     # useddevices["kebaWallbox"] = kebaWallbox
 
-    processBase = ProcessBase(useddevices, mqttServiceDeviceClient,toml)
+    processBase = ProcessBase(useddevices, mqttServiceDeviceClient, toml)
 
     processBase.doWaitForInitialized()
     processBase.subScribeTopics()
     processBase.setUsedDevices()
-    
 
     while True:
         # importedenergie = SDM630_WR.get_import_energy_active()
