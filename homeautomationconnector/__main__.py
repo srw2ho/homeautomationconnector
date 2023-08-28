@@ -163,21 +163,21 @@ def main():
         deviceKey="ServiceDeviceClient", deviceConfig=deviceConfig
     )
 
-    # Wechselrichter SDM
-    SDM630_WR = SDM630Device("SDM630_WR", mqttServiceDeviceClient)
-    # Wärmepumpe SDM
-    SDM630_WP = SDM630Device("SDM630_WP", mqttServiceDeviceClient)
+    # # Wechselrichter SDM
+    # SDM630_WR = SDM630Device("SDM630_WR", mqttServiceDeviceClient)
+    # # Wärmepumpe SDM
+    # SDM630_WP = SDM630Device("SDM630_WP", mqttServiceDeviceClient)
 
-    # Wallbox SDM
-    SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
+    # # Wallbox SDM
+    # SDM630_WB = SDM630Device("SDM630_WB", mqttServiceDeviceClient)
 
-    # Growatt Inverter SPH_TL3_BH_UP
-    SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
-    # Wallbox SDM
-    kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
+    # # Growatt Inverter SPH_TL3_BH_UP
+    # SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
+    # # Wallbox SDM
+    # kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
 
-    DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
-    # gpioDevice = GPIODevice("GPIODevice")
+    # DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
+    # # gpioDevice = GPIODevice("GPIODevice")
 
     RefreshTime: int = 2
 
@@ -211,7 +211,7 @@ def main():
         # serialnumber = SDM630_WR.get_serial_number()
         processBase.doProcess()
 
-        time.sleep(RefreshTime)
+        time.sleep(0.2)
 
     # globMQTTClient.subscribe(MQTT_TOPIC_PPMP, mqtt_producer)
     # start OPC-UA client(s)

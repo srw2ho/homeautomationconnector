@@ -1,10 +1,13 @@
 import time
+
+from datetime import datetime, timezone
 from tomlconfig.tomlutils import TomlParser
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 from ppmpmessage.v3.device_state import DeviceState
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
 from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
+from homeautomationconnector.helpers.timespan import TimeSpan
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 
@@ -29,11 +32,16 @@ class ProcessBase(object):
         self.m_DaikinWP: DaikinDevice = None
         self.m_GPIODevice: GPIODevice = GPIODevice("GPIODevice")
         self.m_tomlParser = tomlParser
+        self.m_TimeSpan = TimeSpan()
+        
         self.m_INVERTER_TEMPERATURE_FAN_ON = self.m_tomlParser.get(
             "homeautomation.INVERTER_TEMPERATURE_FAN_ON", 38
         )
         self.m_INVERTER_TEMPERATURE_FAN_OFF = self.m_tomlParser.get(
             "homeautomation.INVERTER_TEMPERATURE_FAN_OFF", 35
+        )
+        self.m_REFRESHTIME = self.m_tomlParser.get(
+            "mqttdevices.refresh_time", 2
         )
 
     def notifyInfoStateFunction(self, hostname: str = "", infostate: str = ""):
@@ -114,10 +122,10 @@ class ProcessBase(object):
             # 0 == not in Subscibe List
             if self._SPH_TL3_BH_UP_Temp1 != 0:
                 if self._SPH_TL3_BH_UP_Temp1 >= self.m_INVERTER_TEMPERATURE_FAN_ON:
-                    self.m_GPIODevice.switch_Fan(True)
+                    self.m_GPIODevice.switch_InverterFan(True)
 
                 if self._SPH_TL3_BH_UP_Temp1 <= self.m_INVERTER_TEMPERATURE_FAN_OFF:
-                    self.m_GPIODevice.switch_Fan(False)
+                    self.m_GPIODevice.switch_InverterFan(False)
 
         pass
 
@@ -136,31 +144,20 @@ class ProcessBase(object):
         pass
 
     def doProcess(self):
-        self.getProcessValues()
+        timestamp = datetime.now(timezone.utc).astimezone()
+        difference_act = self.m_TimeSpan.getTimeSpantoActTime()
+        hours_actsecs = self.m_TimeSpan.getTimediffernceintoSecs(difference_act)
+        
+        if hours_actsecs >= self.m_REFRESHTIME :    
+            self.m_TimeSpan.setActTime(timestamp)
+            
+            self.getProcessValues()
 
-        self.doProcess_InverterTemperature()
+            self.doProcess_InverterTemperature()
 
-        if self.m_SDM630_WR != None:
-            energy_active = self.m_SDM630_WR.get_l1_export_energy_active()
 
-        if self.m_SDM630_WP != None:
-            energy_active = self.m_SDM630_WP.get_l1_export_energy_active()
 
-        if self.m_SPH_TL3_BH_UP != None:
-            P_rate = self.m_SPH_TL3_BH_UP.get_Active_P_Rate()
 
-        if self.m_kebaWallbox != None:
-            charging_state = self.m_kebaWallbox.get_Charging_State()
-
-        if self.m_DaikinWP != None:
-            havmode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
-            tanktemp = self.m_DaikinWP.get_WATER_temperature()
-
-        for key in self.m_subScribedMetaData.keys():
-            value = self.m_mqttDeviceClient.getValueItemByKey(key)
-            if key == "@SDM630_1.serial_number":
-                a = 1
-                pass
 
     def setUsedDevices(self) -> None:
         if "SDM630_WR" in self.m_useddevices:
