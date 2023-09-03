@@ -8,7 +8,7 @@ from gpiozero import (
     PWMOutputDevice,
     CPUTemperature,
     GPIOZeroError,
-    PingServer,
+    # PingServer,
 )
 from datetime import time
 from signal import pause
@@ -105,9 +105,9 @@ class GPIODevice(object):
             self._cpuTemp.when_activated = self.CPUTempActivate
             self._cpuTemp.when_deactivated = self.CPUTempDeactivate
 
-            self._PingServer = PingServer("google.com", event_delay=10)
-            self._PingServer.when_activated = self.PingServerActivated
-            self._PingServer.when_deactivated = self.PingServerDeactivated
+            # self._PingServer = PingServer("google.com", event_delay=10)
+            # self._PingServer.when_activated = self.PingServerActivated
+            # self._PingServer.when_deactivated = self.PingServerDeactivated
 
             logger.info(f"CPU-Temperature = {self._cpuTemp.temperature} °C")
             # pause()
