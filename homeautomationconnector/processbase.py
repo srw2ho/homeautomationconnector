@@ -5,7 +5,7 @@ from tomlconfig.tomlutils import TomlParser
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 from ppmpmessage.v3.device_state import DeviceState
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
-from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
+from homeautomationconnector.gpiodevicehome.gpiodevicehome import GPIODeviceHomeAutomation
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.helpers.timespan import TimeSpan
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
@@ -31,7 +31,7 @@ class ProcessBase(object):
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
         self.m_tomlParser = tomlParser
-        self.m_GPIODevice: GPIODevice = GPIODevice("GPIODevice", tomlParser)
+        self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation("GPIODevice", tomlParser)
 
         self.m_TimeSpan = TimeSpan()
 

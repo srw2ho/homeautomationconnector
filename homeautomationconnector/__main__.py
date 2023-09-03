@@ -38,7 +38,7 @@ from statistics import mean, median
 
 import statistics
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
-from homeautomationconnector.gpiodevice.gpiodevice import GPIODevice
+from homeautomationconnector.gpiodevicehome.gpiodevicehome import GPIODeviceHomeAutomation
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.modbusdevicebase import ModBusDeviceBase

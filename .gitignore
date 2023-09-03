@@ -23,3 +23,5 @@ homeautomationconnector/kebawallboxdevice/__pycache__/keykontactP30.cpython-39.p
 
 
 homeautomationconnector/helpers/__pycache__/timespan.cpython-39.pyc
+homeautomationconnector/gpiodevicehome/__pycache__/gpiodevice.cpython-39.pyc
+homeautomationconnector/gpiodevicehome/__pycache__/gpiodevicehome.cpython-39.pyc
