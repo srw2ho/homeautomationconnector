@@ -30,19 +30,21 @@ class ProcessBase(object):
         self.m_SPH_TL3_BH_UP: GrowattDevice = None
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
-        self.m_GPIODevice: GPIODevice = GPIODevice("GPIODevice")
         self.m_tomlParser = tomlParser
+        self.m_GPIODevice: GPIODevice = GPIODevice("GPIODevice", tomlParser)
+
         self.m_TimeSpan = TimeSpan()
-        
+
         self.m_INVERTER_TEMPERATURE_FAN_ON = self.m_tomlParser.get(
             "homeautomation.INVERTER_TEMPERATURE_FAN_ON", 38
         )
         self.m_INVERTER_TEMPERATURE_FAN_OFF = self.m_tomlParser.get(
             "homeautomation.INVERTER_TEMPERATURE_FAN_OFF", 35
         )
-        self.m_REFRESHTIME = self.m_tomlParser.get(
-            "mqttdevices.refresh_time", 2
-        )
+        self.m_REFRESHTIME = self.m_tomlParser.get("mqttdevices.refresh_time", 2)
+
+        for key in self.m_useddevices.keys():
+            self.m_DevicedoProcessing[key] = False
 
     def notifyInfoStateFunction(self, hostname: str = "", infostate: str = ""):
         if infostate == DeviceState.OK.value:
@@ -56,7 +58,10 @@ class ProcessBase(object):
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
     def getProcessValues(self):
+
+
         if self.m_SPH_TL3_BH_UP != None:
+           
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
             self._SPH_TL3_BH_UP_Ppv1 = self.m_SPH_TL3_BH_UP.get_Ppv1()
@@ -81,16 +86,20 @@ class ProcessBase(object):
             self._SPH_TL3_BH_UP_Temp3 = self.m_SPH_TL3_BH_UP.get_Temp3()
 
         if self.m_SDM630_WR != None:
+
             self._SDM630_WR_total_power_active = (
                 self.m_SDM630_WR.get_total_power_active()
             )
 
         if self.m_SDM630_WP != None:
+
             self._SDM630_WP_total_power_active = (
                 self.m_SDM630_WP.get_total_power_active()
             )
 
         if self.m_DaikinWP != None:
+
+            
             self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
             self._DaikinWP_WATER_temperature = self.m_DaikinWP.get_WATER_temperature()
             self._DaikinWP_WATER_turn_on = self.m_DaikinWP.get_WATER_turn_on()
@@ -104,17 +113,36 @@ class ProcessBase(object):
             self._DaikinWP_CLIMATE_temperature = (
                 self.m_DaikinWP.get_CLIMATE_temperature()
             )
-            self._DaikinWP_CLIMATE_temperature = (
-                self.m_DaikinWP.get_CLIMATE_temperature()
-            )
+
             self._DaikinWP_Sensor_OutsideTemperature = (
                 self.m_DaikinWP.get_Sensor_OutsideTemperature()
             )
             self._DaikinWP_Sensor_LeavingWaterTemperatur = (
                 self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
             )
+            
+        if self.m_kebaWallbox != None:
+            if not self.m_DevicedoProcessing["kebaWallbox"]: return
+            
+
+            pass
 
     def doProcess_KebaWallbox(self):
+        if self.m_kebaWallbox != None:
+            if not self.m_DevicedoProcessing["kebaWallbox"]: return
+        pass
+
+    def doProcess_DaikinWP(self):
+        if self.m_DaikinWP != None and self.m_SPH_TL3_BH_UP != None:
+            if not self.m_DevicedoProcessing["DaikinWP"]: return
+            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]: return
+            self.doProcess_ControlDaikinWP()
+        pass
+    
+    def doProcess_SPH_TL3_BH_UP(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]: return
+            self.doProcess_InverterTemperature()
         pass
 
     def doProcess_InverterTemperature(self):
@@ -129,8 +157,9 @@ class ProcessBase(object):
 
         pass
 
-    def doProcess_DaikinWP(self):
+    def doProcess_ControlDaikinWP(self):
         if self.m_SPH_TL3_BH_UP != None:
+            
             self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
             self._SPH_TL3_BH_UP_Pactogrid_total = (
                 self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
@@ -147,21 +176,18 @@ class ProcessBase(object):
         timestamp = datetime.now(timezone.utc).astimezone()
         difference_act = self.m_TimeSpan.getTimeSpantoActTime()
         hours_actsecs = self.m_TimeSpan.getTimediffernceintoSecs(difference_act)
-        
-        if hours_actsecs >= self.m_REFRESHTIME :    
+
+        if hours_actsecs >= self.m_REFRESHTIME:
             self.m_TimeSpan.setActTime(timestamp)
-            
+
             self.getProcessValues()
 
-            self.doProcess_InverterTemperature()
-
-
-
-
+            self.doProcess_SPH_TL3_BH_UP()
 
     def setUsedDevices(self) -> None:
         if "SDM630_WR" in self.m_useddevices:
             self.m_SDM630_WR = self.m_useddevices["SDM630_WR"]
+            self.m_DevicedoProcessing
 
         if "SDM630_WP" in self.m_useddevices:
             self.m_SDM630_WP = self.m_useddevices["SDM630_WP"]
