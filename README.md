@@ -28,5 +28,5 @@ python -m homeautomationconnector
     docker build  . -t homeautomationconnector
     
 # Run Docker
-        docker run --privileged -t -i --rm   homeautomationconnector:0.0.0 /bin/sh
-        docker run --privileged --rm -i -t homeautomationconnector /bin/sh
+        docker run  --user root --privileged --rm -i -t homeautomationconnector:0.0.0 /bin/sh
+        docker run -v --user root ${PWD}/etc/appconfigs/.:/etc/appconfigs/.  --privileged -t -i --rm   homeautomationconnector:0.0.0 /bin/sh
