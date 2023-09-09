@@ -28,6 +28,6 @@ python -m homeautomationconnector
     docker build  . -t homeautomationconnector
     
 # Run Docker
-        docker run  --user root --privileged --rm -i -t homeautomationconnector:0.0.0 /bin/sh
-        docker run -v --user root ${PWD}/etc/appconfigs/.:/etc/appconfigs/.  --privileged -t -i --rm   homeautomationconnector:0.0.0 /bin/sh
-        docker run -v --user root ${PWD}/etc/appconfigs/.:/etc/appconfigs/.  --device /dev/gpiomem:/dev/gpiomem -t -i --rm   homeautomationconnector:0.0.0 /bin/sh
+        docker run  --privileged --rm -i -t homeautomationconnector:0.0.0 /bin/sh
+        docker run -v  ${PWD}/etc/appconfigs/.:/etc/appconfigs/.  --privileged -t -i --rm   homeautomationconnector:0.0.0 /bin/sh
+     
