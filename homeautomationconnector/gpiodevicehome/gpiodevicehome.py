@@ -5,7 +5,7 @@ from gpiozero import (
     LED,
     DigitalOutputDevice,
     TimeOfDay,
-    PWMOutputDevice,
+    # PWMOutputDevice,
     CPUTemperature,
     GPIOZeroError,
     # PingServer,
@@ -20,11 +20,6 @@ from signal import pause
 
 logger = logging.getLogger("root")
 
-UNIT_TIME = 0.25
-PIN = 21
-VERBOSE = True
-FREQUENCY = 100
-PWM_CHANNEL = 1
 
 # Pin-Belegung
 # INPUT Relais:
@@ -35,7 +30,7 @@ PWM_CHANNEL = 1
 
 # 4 fach Relais:
 # IN1-> IO07 (WP SmartGrid_0)
-# IN2-> IO08 (WP SmartGrid_2)
+# IN2-> IO08 (WP SmartGrid_1)
 # IN3-> IO11 (FAN)
 # IN4-> IO09
 
@@ -101,9 +96,12 @@ class GPIODeviceHomeAutomation(object):
             self._button_27 = LED(pin=27)
             self._button_27.blink()
             # 4 fach Relais:
+
+            # IN1-> IO07 (WP SmartGrid_0)
             self._digitalout_07 = DigitalOutputDevice(
                 initial_value=False, active_high=False, pin=7
             )
+            # IN2-> IO08 (WP SmartGrid_1)
             self._digitalout_08 = DigitalOutputDevice(
                 initial_value=False, active_high=False, pin=8
             )
@@ -127,19 +125,27 @@ class GPIODeviceHomeAutomation(object):
 
             # self._led_11.blink()
 
-
             self._tod = TimeOfDay(
-                time(hour=self.m_TIMEOFDAY_BEGIN_HOUR, minute=self.m_TIMEOFDAY_BEGIN_MINUTE), time(hour=self.m_TIMEOFDAY_END_HOUR, minute=self.m_TIMEOFDAY_END_MINUTE ), utc=False
+                time(
+                    hour=self.m_TIMEOFDAY_BEGIN_HOUR,
+                    minute=self.m_TIMEOFDAY_BEGIN_MINUTE,
+                ),
+                time(
+                    hour=self.m_TIMEOFDAY_END_HOUR, minute=self.m_TIMEOFDAY_END_MINUTE
+                ),
+                utc=False,
             )
 
             self._tod.when_activated = self.begin_day
             self._tod.when_deactivated = self.end_day
 
-        
             self._cpuTemp = CPUTemperature(
-                event_delay=5, min_temp=self.m_CPU_TEMPERATURE_MIN, max_temp=self.m_CPU_TEMPERATURE_MAX, threshold=self.m_CPU_TEMPERATURE_THRESHOLD
+                event_delay=5,
+                min_temp=self.m_CPU_TEMPERATURE_MIN,
+                max_temp=self.m_CPU_TEMPERATURE_MAX,
+                threshold=self.m_CPU_TEMPERATURE_THRESHOLD,
             )
-          
+
             self._cpuTemp.when_activated = self.CPUTempActivate
             self._cpuTemp.when_deactivated = self.CPUTempDeactivate
 
@@ -153,10 +159,22 @@ class GPIODeviceHomeAutomation(object):
         except GPIOZeroError as e:
             logger.error("doBearerRequest-REQUEST FAILED: %s", e)
 
-  
     def getCpuTemperature(self) -> float:
         return self._cpuTemp.temperature
-          
+
+    def switch_SmartGridWP(self, state_grid_1: int = 0, state_grid_2: int = 0) -> bool:
+        # IN1-> IO07 (WP SmartGrid_0)
+        # IN2-> IO08 (WP SmartGrid_1)
+        if state_grid_1 > 0:
+            self._digitalout_07.on()
+        else:
+            self._digitalout_07.off()
+
+        if state_grid_2 > 0:
+            self._digitalout_08.on()
+        else:
+            self._digitalout_08.off()
+
     def switch_InverterFan(self, state: bool) -> bool:
         # if not self._digitalout_11.is_active:
         #     self._digitalout_11.on()

@@ -1,3 +1,4 @@
+from enum import Enum
 import time
 
 from datetime import datetime, timezone
@@ -5,11 +6,21 @@ from tomlconfig.tomlutils import TomlParser
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 from ppmpmessage.v3.device_state import DeviceState
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
-from homeautomationconnector.gpiodevicehome.gpiodevicehome import GPIODeviceHomeAutomation
+from homeautomationconnector.gpiodevicehome.gpiodevicehome import (
+    GPIODeviceHomeAutomation,
+)
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.helpers.timespan import TimeSpan
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
+
+
+class SwitchONOff(Enum):
+    OK = "ON"
+    OFF = "OFF"
+
+    def __getstate__(self):
+        return self.value
 
 
 class ProcessBase(object):
@@ -31,7 +42,17 @@ class ProcessBase(object):
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
         self.m_tomlParser = tomlParser
-        self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation("GPIODevice", tomlParser)
+        self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation(
+            "GPIODevice", tomlParser
+        )
+
+        self._DaikinWP_WATER_target_temperature_Saved = 0
+        self._SPH_TL3_BH_UP_PLocalLoad_total = 0
+
+        self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
+        self._DaikinWP_CLIMATE_turn_onState = SwitchONOff.OFF
+
+        self._PLocalLoad_Household = 0
 
         self.m_TimeSpan = TimeSpan()
 
@@ -42,6 +63,10 @@ class ProcessBase(object):
             "homeautomation.INVERTER_TEMPERATURE_FAN_OFF", 35
         )
         self.m_REFRESHTIME = self.m_tomlParser.get("mqttdevices.refresh_time", 2)
+
+        self.m_DAIKIN_USE_SMARTGRID_CONTACTS = self.m_tomlParser.get(
+            "daikin.USE_SMARTGRID_CONTACTS", 0
+        )
 
         for key in self.m_useddevices.keys():
             self.m_DevicedoProcessing[key] = False
@@ -58,10 +83,7 @@ class ProcessBase(object):
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
     def getProcessValues(self):
-
-
         if self.m_SPH_TL3_BH_UP != None:
-           
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
             self._SPH_TL3_BH_UP_Ppv1 = self.m_SPH_TL3_BH_UP.get_Ppv1()
@@ -70,6 +92,11 @@ class ProcessBase(object):
             self._SPH_TL3_BH_UP_Pactogrid_total = (
                 self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
             )
+
+            self._SPH_TL3_BH_UP_Pactouser_total = (
+                self.m_SPH_TL3_BH_UP.get_Pactouser_total()
+            )
+
             self._SPH_TL3_BH_UP_PLocalLoad_total = (
                 self.m_SPH_TL3_BH_UP.get_PLocalLoad_total()
             )
@@ -86,24 +113,26 @@ class ProcessBase(object):
             self._SPH_TL3_BH_UP_Temp3 = self.m_SPH_TL3_BH_UP.get_Temp3()
 
         if self.m_SDM630_WR != None:
-
             self._SDM630_WR_total_power_active = (
                 self.m_SDM630_WR.get_total_power_active()
             )
 
         if self.m_SDM630_WP != None:
-
             self._SDM630_WP_total_power_active = (
                 self.m_SDM630_WP.get_total_power_active()
             )
 
-        if self.m_DaikinWP != None:
+            self._PLocalLoad_Household = (
+                self._SPH_TL3_BH_UP_PLocalLoad_total
+                - self._SDM630_WP_total_power_active
+            )
 
-            
+        if self.m_DaikinWP != None:
             self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
             self._DaikinWP_WATER_temperature = self.m_DaikinWP.get_WATER_temperature()
             self._DaikinWP_WATER_turn_on = self.m_DaikinWP.get_WATER_turn_on()
             self._DaikinWP_CLIMATE_turn_on = self.m_DaikinWP.get_CLIMATE_turn_on()
+
             self._DaikinWP_WATER_target_temperature = (
                 self.m_DaikinWP.get_WATER_target_temperature()
             )
@@ -120,29 +149,38 @@ class ProcessBase(object):
             self._DaikinWP_Sensor_LeavingWaterTemperatur = (
                 self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
             )
-            
+
         if self.m_kebaWallbox != None:
-            if not self.m_DevicedoProcessing["kebaWallbox"]: return
-            
+            if not self.m_DevicedoProcessing["kebaWallbox"]:
+                return
 
             pass
 
     def doProcess_KebaWallbox(self):
         if self.m_kebaWallbox != None:
-            if not self.m_DevicedoProcessing["kebaWallbox"]: return
+            if not self.m_DevicedoProcessing["kebaWallbox"]:
+                return
         pass
+
+    def doUnProcess_SPH_TL3_BH_UP(self):
+        self.m_GPIODevice.switch_InverterFan(False)
+        self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
 
     def doProcess_DaikinWP(self):
         if self.m_DaikinWP != None and self.m_SPH_TL3_BH_UP != None:
-            if not self.m_DevicedoProcessing["DaikinWP"]: return
-            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]: return
+            if not self.m_DevicedoProcessing["DaikinWP"]:
+                return
+            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]:
+                return
             self.doProcess_ControlDaikinWP()
         pass
-    
+
     def doProcess_SPH_TL3_BH_UP(self):
         if self.m_SPH_TL3_BH_UP != None:
-            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]: return
-            self.doProcess_InverterTemperature()
+            if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]:
+                self.doUnProcess_SPH_TL3_BH_UP()
+            else:
+                self.doProcess_InverterTemperature()
         pass
 
     def doProcess_InverterTemperature(self):
@@ -157,20 +195,104 @@ class ProcessBase(object):
 
         pass
 
-    def doProcess_ControlDaikinWP(self):
+    def doProcess_ControlDaikinWater(self):
         if self.m_SPH_TL3_BH_UP != None:
-            
-            self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
-            self._SPH_TL3_BH_UP_Pactogrid_total = (
-                self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
-            )
-            self._SPH_TL3_BH_UP_PLocalLoad_total = (
-                self.m_SPH_TL3_BH_UP.get_PLocalLoad_total()
-            )
-            self._SPH_TL3_BH_UP_Pdischarge1 = self.m_SPH_TL3_BH_UP.get_Pdischarge1()
-            self._SPH_TL3_BH_UP_Pcharge1 = self.m_SPH_TL3_BH_UP.get_Pcharge1()
+            if self._DaikinWP_WATER_turn_on:
+                if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
+                    # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
+                    #
+
+                    if self._SDM630_WP_total_power_active < 300:
+                        pass
+
+                    if self._SPH_TL3_BH_UP_Pdischarge1 > 300:
+                        pass
+                    # wir speisen zur Zeit ein
+                    if self._SPH_TL3_BH_UP_Pactogrid_total > 1000:
+                        if (
+                            self._DaikinWP_WATER_temperature
+                            <= self._DaikinWP_WATER_target_temperature
+                        ):
+                            self._DaikinWP_WATER_target_temperature_Saved = (
+                                self._DaikinWP_WATER_target_temperature
+                            )
+
+                            if self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
+                                self.m_GPIODevice.switch_SmartGridWP(
+                                    state_grid_1=1, state_grid_2=1
+                                )
+                            else:
+                                WATER_max_temp = self.m_DaikinWP.get_WATER_max_temp()
+                                execute = self.m_DaikinWP.set_WATER_tank_state(
+                                    "performance"
+                                )
+                                execute = self.m_DaikinWP.set_WATER_target_temperature(
+                                    WATER_max_temp
+                                )
+
+                        self._DaikinWP_WATER_turn_onState == SwitchONOff.ON
+
+                elif self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
+                    doCancel = False
+                    # wird noch geheizt
+                    if (
+                        self._DaikinWP_WATER_temperature
+                        >= self.m_DaikinWP.get_WATER_max_temp()
+                    ):
+                        doCancel = True
+
+                    if self._SPH_TL3_BH_UP_Pdischarge1 > 300:
+                        pass
+
+                    # andere Verbraucher aktiv
+                    if self._PLocalLoad_Household > 600:
+                        pass
+
+                    if self._SDM630_WP_total_power_active > 300:
+                        pass
+                    # noch PV Leistung vorhanden
+                    if self._SPH_TL3_BH_UP_Pactouser_total > 100:
+                        doCancel = True
+
+                    if doCancel:
+                        if self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
+                            self.m_GPIODevice.switch_SmartGridWP(
+                                state_grid_1=0, state_grid_2=0
+                            )
+                        else:
+                            execute = self.m_DaikinWP.set_WATER_target_temperature(
+                                self._DaikinWP_WATER_target_temperature_Saved
+                            )
+                            execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
+                        self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF
+
+            if self._DaikinWP_CLIMATE_turn_on:
+                pass
 
         pass
+
+    def doProcess_ControlDaikinClimate(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            if self._DaikinWP_CLIMATE_turn_on:
+                if self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.OFF:
+                    pass
+                    # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
+                    #
+
+                    # self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.ON
+
+                elif self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.ON:
+                    # self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.OFF
+                    pass
+
+    def doProcess_ControlDaikinWP(self):
+        if self.m_SPH_TL3_BH_UP != None:
+            # Water-Turn-Betrieb
+
+            # self._SPH_TL3_BH_UP_Pactogrid_total
+            # self._SPH_TL3_BH_UP_PLocalLoad_total
+            self.doProcess_ControlDaikinWater()
+            self.doProcess_ControlDaikinClimate()
 
     def doProcess(self):
         timestamp = datetime.now(timezone.utc).astimezone()
