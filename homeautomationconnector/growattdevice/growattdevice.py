@@ -16,11 +16,11 @@ class GrowattDevice(ModBusDeviceBase):
     # def getKeyByDeviceName(self, key) -> str:
     #     return f"@{self.m_deviceKey}.{key}"
 
-    def get_Inverter_Status(self) -> float:
+    def get_Inverter_Status(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("Inverter_Status")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = -1 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Ppv(self) -> float:
@@ -525,7 +525,7 @@ class GrowattDevice(ModBusDeviceBase):
     def get_OnOff(self) -> int:
         ret = self.m_mqttDeviceClient.getValueByKey(self.getKeyByDeviceName("OnOff"))
 
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = -1 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def set_OnOff(self, value) -> int:

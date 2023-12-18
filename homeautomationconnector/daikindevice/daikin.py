@@ -107,35 +107,35 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoControlMode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoisHolidayModeActive(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoisHolidayModeActive")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoisInEmergencyState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoisInEmergencyState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoisInErrorState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoisInErrorState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoisInInstallerState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoisInInstallerState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoisInWarningState(self) -> bool:
@@ -149,7 +149,7 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoErrorCode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_WiFiStrength(self) -> float:
@@ -184,91 +184,91 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.SerialNumber")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankheatupMode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankheatupMode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_TankoperationMode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.TankoperationMode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisHolidayModeActive(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisHolidayModeActive")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisInEmergencyState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisInEmergencyState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisInErrorState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisInErrorState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisInInstallerState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisInInstallerState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisInWarningState(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisInWarningState")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankisPowerfulModeActive(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankisPowerfulModeActive")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoTankErrorCode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoTankErrorCode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_CLIMATE_preset_mode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.preset_mode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_CLIMATE_hvac_modes(self) -> list[str]:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.hvac_modes")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = [] if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_CLIMATE_hvac_mode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.hvac_mode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def set_CLIMATE_hvac_mode(self, value) -> bool:
@@ -326,14 +326,14 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.temperature_unit")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_WATER_extra_state_attributes(self) -> dict:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.extra_state_attributes")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = {} if ret == None else ret  # Requires Python version >= 2.5
         return val
     
     def get_WATER_temperature(self) -> float:
@@ -349,7 +349,7 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.tank_state")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val
     
     def get_WATER_target_temperature(self) -> float:
@@ -367,11 +367,6 @@ class DaikinDevice(ModBusDeviceBase):
         )
         return ret
 
-    def get_WATER_tank_state(self, value) -> str:
-        ret = self.m_mqttDeviceClient.getValueByKey(
-            key=self.getKeyByDeviceName("WATER.tank_state"),
-        )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
 
     def set_WATER_tank_state(self, value) -> bool:
         ret = self.m_mqttDeviceClient.writeValueByKey(
@@ -399,26 +394,26 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.temperature_unit")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = "" if ret == None else ret  # Requires Python version >= 2.5
         return val       
 
     def get_WATER_operation_list(self) -> list[str]:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.operation_list")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = [] if ret == None else ret  # Requires Python version >= 2.5
         return val   
     
     def get_WATER_turn_on(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.turn_on")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val     
     
     def get_CLIMATE_turn_on(self) -> bool:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.turn_on")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = False if ret == None else ret  # Requires Python version >= 2.5
         return val                                                                                                                                                                                                                                                                                  

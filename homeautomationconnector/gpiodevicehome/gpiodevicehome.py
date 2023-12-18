@@ -219,13 +219,16 @@ class GPIODeviceHomeAutomation(object):
         else:
             self._digitalout_08.off()
 
+    def get_InverterFan(self) -> bool:
+        return self._digitalout_11.is_active
+    
     def switch_InverterFan(self, state: bool) -> bool:
         # if not self._digitalout_11.is_active:
         #     self._digitalout_11.on()
         # else:
         #     self._digitalout_11.off()
         # return
-        if self._digitalout_11 == None: return
+        if self._digitalout_11 == None: return False
         
         if state:
             if not self._digitalout_11.is_active:

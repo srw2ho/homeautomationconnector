@@ -148,6 +148,7 @@ def createDeviceByKey(
     return None
 
 def main():
+    activate_logging = toml.get("mqttdevices.activate_logging", 0)
     deviceConfig: dict = {
         "mqtt.host": MQTT_HOST,
         "mqtt.port": MQTT_PORT,
@@ -156,7 +157,7 @@ def main():
         "mqtt.tls_cert": MQTT_TLS_CERT,
         "mqtt.mqtt_devicename": "mqtt_devicename",
         "DeviceServiceNames": MQTTDEVICELIST,
-        "LoggingLevel": 1,
+        "LoggingLevel": activate_logging,
     }
 
     mqttServiceDeviceClient = MQTTServiceDeviceClient(
