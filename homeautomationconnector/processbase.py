@@ -165,6 +165,9 @@ class ProcessBase(object):
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
             self._SPH_TL3_BH_UP_Ppv1 = self.m_SPH_TL3_BH_UP.get_Ppv1()
             self._SPH_TL3_BH_UP_Ppv2 = self.m_SPH_TL3_BH_UP.get_Ppv2()
+            self._SPH_TL3_BH_UP_Vpv1 = self.m_SPH_TL3_BH_UP.get_Vpv1()
+            self._SPH_TL3_BH_UP_Vpv2 = self.m_SPH_TL3_BH_UP.get_Vpv2()
+
             self._SPH_TL3_BH_UP_Pac = self.m_SPH_TL3_BH_UP.get_Pac()
             self._SPH_TL3_BH_UP_Pactogrid_total = (
                 self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
@@ -298,18 +301,27 @@ class ProcessBase(object):
                     timestamp_sr = self.m_today_sr
                     # check for inverter zwischen sonnen-aufgang und sonnen-untergang
                     # inverter immer einschalten
-                    if timestamp_sr <= timestamp <= timestamp_ss:
+                    InverterSwitchOn = (
+                        (self._SPH_TL3_BH_UP_Vpv1 > 120)
+                        and (self._SPH_TL3_BH_UP_Vpv2 > 120)
+                        or self._SDM630_WR_total_power_active > 0
+                    )
+
+                    if (timestamp_sr <= timestamp <= timestamp_ss) or InverterSwitchOn:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
-                            self.m_SPH_TL3_BH_UP.set_OnOff(
-                                self, InverterStateONOff.ON.value
-                            )
+                            self.m_SPH_TL3_BH_UP.set_OnOff(InverterStateONOff.ON.value)
                             logger.info(f"doProcess_InverterState: set_OnOff(1)")
 
                     else:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.ON.value:
                             # keine Leistung vom WR
-                            if self._SPH_TL3_BH_UP_SOC <= self._SPH_TL3_BH_UP_SOC_Min:
-                                if self._SPH_TL3_BH_UP_Ppv == 0:
+                            if (self._SPH_TL3_BH_UP_Vpv1 < 120) and (
+                                self._SPH_TL3_BH_UP_Vpv2 < 120
+                            ):
+                                if (
+                                    self._SPH_TL3_BH_UP_SOC
+                                    <= self._SPH_TL3_BH_UP_SOC_Min
+                                ):
                                     if self._SDM630_WR_total_power_active < 0:
                                         self.m_SPH_TL3_BH_UP.set_OnOff(
                                             InverterStateONOff.OFF.value
@@ -520,6 +532,18 @@ class ProcessBase(object):
             # self.m_TimeSpan_Sunrise.setActTime(timestamp)
 
         if hours_actsecs >= self.m_REFRESHTIME:
+            
+            logger.info(f"CPU-Temperature = {self.m_GPIODevice.getCpuTemperature()} °C")
+            
+            logger.info(f"is_PVSurplus = {self.m_GPIODevice.is_PVSurplus()}")
+
+            logger.info(f"is_WPClimateOn = {self.m_GPIODevice.is_WPClimateOn()}")     
+            
+            logger.info(f"is_Button17On = {self.m_GPIODevice.is_Button17On()}")        
+    
+            logger.info(f"is_Button27On = {self.m_GPIODevice.is_Button27On()}")                    
+
+        
             self.m_TimeSpan.setActTime(timestamp)
 
             self.getProcessValues()

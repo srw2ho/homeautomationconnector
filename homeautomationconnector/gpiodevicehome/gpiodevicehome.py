@@ -33,7 +33,7 @@ logger = logging.getLogger("root")
 # 4 fach Relais:
 # IN1-> IO07 (WP SmartGrid_0)
 # IN2-> IO08 (WP SmartGrid_1)
-# IN3-> IO11 (FAN)
+# IN3-> IO11 (FAN WR)
 # IN4-> IO09
 
 
@@ -110,28 +110,30 @@ class GPIODeviceHomeAutomation(object):
    
 
     
-            # B4 -> IO16 : (Inverter PACToGrid > 300 Watt as Cry Contact) , first Relais from left
+            # B4 -> IO16 : (Inverter PACToGrid > 300 Watt as Dry Contact) , first Relais from left
             self._button_16 = Button(pull_up=None, active_state=False, pin=16)
-            self._button_16.when_activated=self.button_16_Activate
-            self._button_16.when_deactivated=self.button_16_Deactivate
+            # self._button_16.when_activated=self.button_16_Activate
+            # self._button_16.when_deactivated=self.button_16_Deactivate
+
+  
             
             # B2 -> IO17: last Relais from Right
             self._button_17 = Button(pull_up=None, active_state=False, pin=17)
-            self._button_17.when_activated=self.button_17_Activate
-            self._button_17.when_deactivated=self.button_17_Deactivate
+            # self._button_17.when_activated=self.button_17_Activate
+            # self._button_17.when_deactivated=self.button_17_Deactivate
             
 
             # self._button_23 = Button(pull_up=None, active_state=False, pin=23)
-            # B3 -> IO24
+            # B3 -> IO24 : second Relais from Left
             self._button_24 = Button(pull_up=None, active_state=False, pin=24)
-            self._button_24.when_activated=self.button_24_Activate
-            self._button_24.when_deactivated=self.button_24_Deactivate            
+            # self._button_24.when_activated=self.button_24_Activate
+            # self._button_24.when_deactivated=self.button_24_Deactivate            
             
 
-            # B1 -> IO27
+            # B1 -> IO27: second last from Right
             self._button_27 = Button(pull_up=None, active_state=False, pin=27)
-            self._button_27.when_activated=self.button_27_Activate
-            self._button_27.when_deactivated=self.button_27_Deactivate
+            # self._button_27.when_activated=self.button_27_Activate
+            # self._button_27.when_deactivated=self.button_27_Deactivate
 
             self._button_25 = Button(pull_up=None, active_state=False, pin=25)
             self._button_26 = Button(pull_up=None, active_state=False, pin=26)
@@ -172,19 +174,19 @@ class GPIODeviceHomeAutomation(object):
             # self._PingServer.when_activated = self.PingServerActivated
             # self._PingServer.when_deactivated = self.PingServerDeactivated
 
-            self._tod = TimeOfDay(
-                time(
-                    hour=self.m_TIMEOFDAY_BEGIN_HOUR,
-                    minute=self.m_TIMEOFDAY_BEGIN_MINUTE,
-                ),
-                time(
-                    hour=self.m_TIMEOFDAY_END_HOUR, minute=self.m_TIMEOFDAY_END_MINUTE
-                ),
-                utc=False,
-            )
+            # self._tod = TimeOfDay(
+            #     time(
+            #         hour=self.m_TIMEOFDAY_BEGIN_HOUR,
+            #         minute=self.m_TIMEOFDAY_BEGIN_MINUTE,
+            #     ),
+            #     time(
+            #         hour=self.m_TIMEOFDAY_END_HOUR, minute=self.m_TIMEOFDAY_END_MINUTE
+            #     ),
+            #     utc=False,
+            # )
 
-            self._tod.when_activated = self.begin_day
-            self._tod.when_deactivated = self.end_day
+            # self._tod.when_activated = self.begin_day
+            # self._tod.when_deactivated = self.end_day
 
             self._cpuTemp = CPUTemperature(
                 event_delay=5,
@@ -193,8 +195,8 @@ class GPIODeviceHomeAutomation(object):
                 threshold=self.m_CPU_TEMPERATURE_THRESHOLD,
             )
 
-            self._cpuTemp.when_activated = self.CPUTempActivate
-            self._cpuTemp.when_deactivated = self.CPUTempDeactivate
+            # self._cpuTemp.when_activated = self.CPUTempActivate
+            # self._cpuTemp.when_deactivated = self.CPUTempDeactivate
 
             logger.info(f"CPU-Temperature = {self._cpuTemp.temperature} °C")
     
@@ -202,6 +204,17 @@ class GPIODeviceHomeAutomation(object):
         except GPIOZeroError as e:
             logger.error("initialize_gpio FAILED: %s", e)
 
+    def is_PVSurplus(self) -> bool:
+        return self._button_16.is_active
+    
+    def is_WPClimateOn(self) -> bool:
+        return self._button_24.is_active
+
+    def is_Button17On(self) -> bool:
+        return self._button_17.is_active
+    
+    def is_Button27On(self) -> bool:
+        return self._button_27.is_active
   
     def getCpuTemperature(self) -> float:
         return self._cpuTemp.temperature
@@ -270,57 +283,57 @@ class GPIODeviceHomeAutomation(object):
 
     def button_16_Activate(self):
         # B4 -> IO16 : (Inverter PACToGrid >= 300 Watt as Cry Contact) 
-        logger.error(
+        logger.info(
             f"_button_16-Activate: Value:{self._button_16.value}"
         )
 
 
     def button_16_Deactivate(self):
         # B4 -> IO16 : (Inverter PACToGrid < 300 Watt as Cry Contact) 
-        logger.error(
+        logger.info(
             f"_button_16-DeActivate: Value:{self._button_16.value}"
         )
         
     def button_17_Activate(self):
-        logger.error(
+        logger.info(
             f"_button_17-Activate: Value:{self._button_17.value}"
         )
 
 
     def button_17_Deactivate(self):
-        logger.error(
+        logger.info(
             f"_button_17-DeActivate: Value:{self._button_17.value}"
         )
 
     def button_27_Activate(self):
-        logger.error(
+        logger.info(
             f"_button_27-Activate: Value:{self._button_27.value}"
         )
 
 
     def button_27_Deactivate(self):
-        logger.error(
+        logger.info(
             f"_button_27-DeActivate: Value:{self._button_27.value}"
         )
 
     def button_24_Activate(self):
-        logger.error(
+        logger.info(
             f"_button_24-Activate: Value:{self._button_24.value}"
         )
 
     def button_24_Deactivate(self):
-        logger.error(
+        logger.info(
             f"_button_24-DeActivate: Value:{self._button_24.value}"
         )
                                 
         
     def CPUTempActivate(self):
-        logger.error(
+        logger.info(
             f"CPUTempActivate: Temperature:{self._cpuTemp.temperature} °C, % = {self._cpuTemp.value}"
         )
         pass
 
     def CPUTempDeactivate(self):
-        logger.error(
+        logger.info(
             f"CPUTempDeActivate: Temperature:{self._cpuTemp.temperature} °C, % = {self._cpuTemp.value}"
         )
