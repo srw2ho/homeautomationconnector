@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 import logging
 import math
 import time
@@ -11,12 +12,19 @@ from homeautomationconnector.daikindevice.daikin import DaikinDevice
 from homeautomationconnector.gpiodevicehome.gpiodevicehome import (
     GPIODeviceHomeAutomation,
 )
+from ppmpmessage.v3.device import Device
+from ppmpmessage.v3.util import local_now
+from ppmpmessage.convertor.simple_variables import SimpleVariables
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.helpers.timespan import TimeSpan
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 from suntime import Sun, SunTimeException
 
+
+SERVICE_DEVICE_NAME = "homemqttservice"
+SERVICE_DEVICE_NETID = "homeconnector"
+DEVICE_TYPE_CTRL = "homeconnector"
 
 logger = logging.getLogger("root")
 
@@ -62,6 +70,20 @@ class ProcessBase(object):
 
         self.m_today_sr = None
         self.m_today_ss = None
+        self._SPH_TL3_BH_UP_OnOff = None
+
+        self._SPH_TL3_BH_UP_OnOff = None
+        self._DaikinWP_WATER_turn_onState = None
+        self._SPH_TL3_BH_UP_Inverter_Status = None
+        self._DaikinWP_WATER_turn_on = None
+        self._DaikinWP_CLIMATE_turn_on = None
+        self._DaikinWP_CLIMATE_temperature = None
+        self._DaikinWP_WATER_target_temperature = None
+        self._DaikinWP_CLIMATE_target_temperature = None
+        self._DaikinWP_Sensor_OutsideTemperature = None
+        self._DaikinWP_Sensor_LeavingWaterTemperatur = None
+        self._DaikinWP_WATER_tank_state = None
+        self._DaikinWP_WATER_temperature = None
 
         self.m_lastday = 0
         self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation(
@@ -82,6 +104,17 @@ class ProcessBase(object):
         # self.m_TimeSpan_Sunrise = TimeSpan()
         self.m_TimeSpan_Daikin_Control_Water = TimeSpan()
 
+        self.m_ctrldevice = Device(
+            additionalData={
+                "type": DEVICE_TYPE_CTRL,
+                "hostname": SERVICE_DEVICE_NAME,
+            },
+        )
+
+        ctrldevicenetid = f"{SERVICE_DEVICE_NAME}_{SERVICE_DEVICE_NETID}"
+
+        self.m_ctrldevice.setNetId(ctrldevicenetid)
+        self.m_ctrldevice.sethostNameByNetId(SERVICE_DEVICE_NETID)
         # PV_SURPLUS=1000
         # PV_SURPLUS_PERFORMANCE_MODE=3000
         self.m_PV_Surplus = self.m_tomlParser.get("daikin.PV_SURPLUS", 0)
@@ -98,6 +131,10 @@ class ProcessBase(object):
 
         self.m_doProcessInverterStatus = self.m_tomlParser.get(
             "homeautomation.DO_PROCESS_INVERTER_STATUS", 0
+        )
+
+        self.m_MPPT_StartVoltage = self.m_tomlParser.get(
+            "homeautomation.MPPT_StartVoltage", 120.0
         )
 
         self.m_doProcessDaikinControlWater = self.m_tomlParser.get(
@@ -301,13 +338,20 @@ class ProcessBase(object):
                     timestamp_sr = self.m_today_sr
                     # check for inverter zwischen sonnen-aufgang und sonnen-untergang
                     # inverter immer einschalten
-                    InverterSwitchOn = (
-                        (self._SPH_TL3_BH_UP_Vpv1 > 120)
-                        and (self._SPH_TL3_BH_UP_Vpv2 > 120)
-                        or self._SDM630_WR_total_power_active > 0
-                    )
 
-                    if (timestamp_sr <= timestamp <= timestamp_ss) or InverterSwitchOn:
+                    InverterTimeOn = timestamp_sr <= timestamp <= timestamp_ss
+                    if not InverterTimeOn:
+                        InverterTimeOn = (
+                            (self._SPH_TL3_BH_UP_Vpv1 > self.m_MPPT_StartVoltage * 3.0)
+                            and (
+                                self._SPH_TL3_BH_UP_Vpv2
+                                > self.m_MPPT_StartVoltage * 3.0
+                            )
+                            and self._SDM630_WR_total_power_active > 0
+                        )
+
+                    # zwischen Sonnenauf und Sonneununtergang oder bei hoher MPPT-Spannung
+                    if InverterTimeOn:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
                             self.m_SPH_TL3_BH_UP.set_OnOff(InverterStateONOff.ON.value)
                             logger.info(f"doProcess_InverterState: set_OnOff(1)")
@@ -315,11 +359,12 @@ class ProcessBase(object):
                     else:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.ON.value:
                             # keine Leistung vom WR
-                            if (self._SPH_TL3_BH_UP_Vpv1 < 120) and (
-                                self._SPH_TL3_BH_UP_Vpv2 < 120
-                            ):
+                            if (
+                                self._SPH_TL3_BH_UP_Vpv1 < self.m_MPPT_StartVoltage
+                            ) and (self._SPH_TL3_BH_UP_Vpv2 < self.m_MPPT_StartVoltage):
                                 if (
-                                    self._SPH_TL3_BH_UP_SOC
+                                    self._SPH_TL3_BH_UP_SOC_Min * 0.8
+                                    <= self._SPH_TL3_BH_UP_SOC
                                     <= self._SPH_TL3_BH_UP_SOC_Min
                                 ):
                                     if self._SDM630_WR_total_power_active < 0:
@@ -346,12 +391,6 @@ class ProcessBase(object):
                 if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
                     # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
                     #
-
-                    if self._SDM630_WP_total_power_active < 300:
-                        pass
-
-                    if self._SPH_TL3_BH_UP_Pdischarge1 > 300:
-                        pass
                     # wir speisen zur Zeit ein
                     if self._SPH_TL3_BH_UP_Pactogrid_total > self.m_PV_Surplus:
                         self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
@@ -393,9 +432,20 @@ class ProcessBase(object):
                                         state_grid_1=1, state_grid_2=1
                                     )
                                 else:
+                                    # if (
+                                    #     self._DaikinWP_WATER_temperature
+                                    #     > self._DaikinWP_WATER_target_temperature
+                                    # ):
+                                    #     WATER_max_temp = (
+                                    #         self._DaikinWP_WATER_temperature + 5
+                                    #     )
+                                    # else:
+                                    #     WATER_max_temp = (
+                                    #         self._DaikinWP_WATER_target_temperature + 5
+                                    #     )
                                     WATER_max_temp = (
-                                        self._DaikinWP_WATER_target_temperature + 5
-                                    )
+                                            self._DaikinWP_WATER_temperature + 5
+                                        )
                                     if (
                                         self._SPH_TL3_BH_UP_Pactogrid_total
                                         > self.m_PV_Surplus_PerformanceMode
@@ -513,6 +563,66 @@ class ProcessBase(object):
             self.doProcess_ControlDaikinWater(timestamp)
             self.doProcess_ControlDaikinClimate(timestamp)
 
+    def getTopicByKey(self, key: str) -> str:
+        topic = f"mh/{SERVICE_DEVICE_NAME}/{SERVICE_DEVICE_NETID}/data/{key}"
+
+        return topic
+
+    def getMetaKeyByKey(self, key: str) -> str:
+        return f"@{SERVICE_DEVICE_NETID}.{key}"
+
+    def getActTime(self):
+        timestamp = datetime.now(timezone.utc).astimezone()
+        posix_timestamp = datetime.timestamp(timestamp) * 1000
+        return posix_timestamp
+
+    def getPayloadfromValue(self, identifier: str, value: any) -> dict:
+        try:
+            payload = {}
+            payload = {
+                "metakey": self.getMetaKeyByKey(identifier),
+                "identifier": identifier,
+                "posix_timestamp": self.getActTime(),
+                "value": value,
+            }
+
+        finally:
+            return payload
+
+    def doPublishPayload(self, jsonpayload: dict, retained: bool = False):
+        try:
+            if self.m_mqttDeviceClient.getMQTTClient().isConnected():
+                changedPayload = {
+                    k: self.getPayloadfromValue(k, v)
+                    for k, v in jsonpayload.items()
+                    # if isValueChanged(k, v)
+                }
+
+                # write changed Values over MQTT
+                for k, v in changedPayload.items():
+                    try:
+                        self.m_mqttDeviceClient.getMQTTClient().publish(
+                            self.getTopicByKey(k),
+                            json.dumps(v),
+                            retain=retained,
+                        )
+                    except Exception as e:
+                        logger.error(f"doPublishPayload: publish : Error->{e}")
+
+                acttime = local_now()
+                simplevars = SimpleVariables(self.m_ctrldevice, jsonpayload, acttime)
+                ppmppayload = simplevars.to_ppmp()
+                self.m_mqttDeviceClient.getMQTTClient().publish(
+                    self.m_ctrldevice.ppmp_topic(), ppmppayload, retain=False
+                )
+
+                # if len(changedPayload.keys()) > 0:
+                #     self.m_lastMQTTPayload.update(jsonpayload)
+            else:
+                logger.error(f"doPublishPayload: error-> MQTT is not connected")
+        except Exception as e:
+            logger.error(f"doPublishPayload: error:{e}")
+
     def doProcess(self):
         timestamp = datetime.now(timezone.utc).astimezone()
         difference_act = self.m_TimeSpan.getTimeSpantoActTime()
@@ -531,19 +641,55 @@ class ProcessBase(object):
             self.m_lastday = actualday
             # self.m_TimeSpan_Sunrise.setActTime(timestamp)
 
+        #  val = 0 if ret == None else ret  # Requires Python version >= 2.5
         if hours_actsecs >= self.m_REFRESHTIME:
-            
-            logger.info(f"CPU-Temperature = {self.m_GPIODevice.getCpuTemperature()} °C")
-            
-            logger.info(f"is_PVSurplus = {self.m_GPIODevice.is_PVSurplus()}")
+            payload = {
+                "CPU_Temperature": self.m_GPIODevice.getCpuTemperature(),
+                "is_PVSurplus": self.m_GPIODevice.is_PVSurplus(),
+                "is_WPClimateOn": self.m_GPIODevice.is_WPClimateOn(),
+                "SPH_TL3_BH_UP_OnOff": 0
+                if self._SPH_TL3_BH_UP_OnOff == None
+                else self._SPH_TL3_BH_UP_OnOff,
+                "DaikinWP_WATER_turn_on": False
+                if self._DaikinWP_WATER_turn_on == None
+                else self._DaikinWP_WATER_turn_on,
+                "DaikinWP_CLIMATE_turn_on": False
+                if self._DaikinWP_CLIMATE_turn_on == None
+                else self._DaikinWP_CLIMATE_turn_on,
+                "SPH_TL3_BH_UP_Inverter_Status": 0
+                if self._SPH_TL3_BH_UP_Inverter_Status == None
+                else self._SPH_TL3_BH_UP_Inverter_Status,
+                "DaikinWP_WATER_tank_state": ""
+                if self._DaikinWP_WATER_tank_state == None
+                else self._DaikinWP_WATER_tank_state,
+                "DaikinWP_WATER_temperature": 0.0
+                if self._DaikinWP_WATER_temperature == None
+                else self._DaikinWP_WATER_temperature,
+                "DaikinWP_CLIMATE_temperature": 0
+                if self._DaikinWP_CLIMATE_temperature == None
+                else self._DaikinWP_CLIMATE_temperature,
+                "DaikinWP_WATER_target_temperature": 0.0
+                if self._DaikinWP_WATER_target_temperature == None
+                else self._DaikinWP_WATER_target_temperature,
+                "DaikinWP_CLIMATE_target_temperature": 0.0
+                if self._DaikinWP_CLIMATE_target_temperature == None
+                else self._DaikinWP_CLIMATE_target_temperature,
+                "DaikinWP_Sensor_OutsideTemperature": 0
+                if self._DaikinWP_Sensor_OutsideTemperature == None
+                else self._DaikinWP_Sensor_OutsideTemperature,
+                "DaikinWP_Sensor_LeavingWaterTemperatur": 0
+                if self._DaikinWP_Sensor_LeavingWaterTemperatur == None
+                else self._DaikinWP_Sensor_LeavingWaterTemperatur,
+                "sunrise": ""
+                if self.m_today_sr == None
+                else self.m_today_sr.strftime("%Y-%m-%d, %H:%M:%S"),
+                "sunset": ""
+                if self.m_today_ss == None
+                else self.m_today_ss.strftime("%Y-%m-%d, %H:%M:%S"),
+            }
 
-            logger.info(f"is_WPClimateOn = {self.m_GPIODevice.is_WPClimateOn()}")     
-            
-            logger.info(f"is_Button17On = {self.m_GPIODevice.is_Button17On()}")        
-    
-            logger.info(f"is_Button27On = {self.m_GPIODevice.is_Button27On()}")                    
+            self.doPublishPayload(payload)
 
-        
             self.m_TimeSpan.setActTime(timestamp)
 
             self.getProcessValues()

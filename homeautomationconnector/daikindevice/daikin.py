@@ -23,7 +23,7 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.TankTemperature")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_OutsideTemperature(self) -> float:
@@ -37,70 +37,70 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Daily.CoolEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Daily_HeatEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Daily.HeatEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Weekly_CoolEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Weekly.CoolEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Weekly_HeatEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Weekly.HeatEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Weekly_HeatTankEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Weekly.HeatTankEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Yearly_CoolEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Yearly.CoolEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Yearly_HeatEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Yearly.HeatEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_Yearly_HeatTankEnergyConsumption(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.Yearly.HeatTankEnergyConsumption")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_OperationMode(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.OperationMode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoSetpointMode(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InfoSetpointMode")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InfoControlMode(self) -> str:
@@ -156,21 +156,21 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.WiFiStrength")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_WiFiSSID(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.WiFiSSID")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_InternalSSID(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("sensor.Altherma.InternalSSID")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_Sensor_MacAddress(self) -> float:
@@ -290,14 +290,14 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.target_temperature_step")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_CLIMATE_target_temperature(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.target_temperature")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def set_CLIMATE_target_temperature(self, value) -> bool:
@@ -312,14 +312,14 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.min_temp")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_CLIMATE_max_temp(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("CLIMATE.max_temp")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
     
     def get_CLIMATE_temperature_unit(self) -> str:
@@ -340,7 +340,7 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.temperature")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     
@@ -356,7 +356,7 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.target_temperature")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def set_WATER_target_temperature(self, value) -> bool:
@@ -380,14 +380,14 @@ class DaikinDevice(ModBusDeviceBase):
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.min_temp")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val     
 
     def get_WATER_max_temp(self) -> float:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("WATER.max_temp")
         )
-        val = 0 if ret == None else ret  # Requires Python version >= 2.5
+        val = 0.0 if ret == None else ret  # Requires Python version >= 2.5
         return val
 
     def get_WATER_temperature_unit(self) -> str:
