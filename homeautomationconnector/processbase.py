@@ -100,6 +100,8 @@ class ProcessBase(object):
 
         self._PLocalLoad_Household = 0
 
+
+        self.m_TimeSpan_InverterState = TimeSpan()
         self.m_TimeSpan = TimeSpan()
         # self.m_TimeSpan_Sunrise = TimeSpan()
         self.m_TimeSpan_Daikin_Control_Water = TimeSpan()
@@ -331,6 +333,7 @@ class ProcessBase(object):
     def doProcess_InverterState(self):
         if self.m_SPH_TL3_BH_UP != None:
             if self.m_doProcessInverterStatus > 0:
+
                 if self.m_today_ss and self.m_today_sr:
                     # 0 == not in Subscibe List
                     timestamp = datetime.now(timezone.utc).astimezone()
@@ -341,15 +344,36 @@ class ProcessBase(object):
 
                     InverterTimeOn = timestamp_sr <= timestamp <= timestamp_ss
                     if not InverterTimeOn:
-                        InverterTimeOn = (
-                            (self._SPH_TL3_BH_UP_Vpv1 > self.m_MPPT_StartVoltage * 3.0)
-                            and (
-                                self._SPH_TL3_BH_UP_Vpv2
-                                > self.m_MPPT_StartVoltage * 3.0
-                            )
-                            and self._SDM630_WR_total_power_active > 0
-                        )
+                        # InverterTimeOn = (
+                        #     (self._SPH_TL3_BH_UP_Vpv1 > self.m_MPPT_StartVoltage * 3.0)
+                        #     and (
+                        #         self._SPH_TL3_BH_UP_Vpv2
+                        #         > self.m_MPPT_StartVoltage * 3.0
+                        #     )
+                        #     and self._SDM630_WR_total_power_active > 10
+                        # )
+                        InverterTimeOn = self._SDM630_WR_total_power_active > 0
+                        
 
+                        if not InverterTimeOn:
+                            self.m_TimeSpan_InverterState.setActTime(timestamp)
+                        else:
+                            difference = (
+                                self.m_TimeSpan_InverterState.getTimeSpantoActTime()
+                            )
+
+                            difference_secs = (
+                                self.m_TimeSpan_InverterState.getTimediffernceintoSecs(
+                                    difference
+                                )
+                            )
+
+                            if difference_secs < 1000:
+                                InverterTimeOn = False
+                        
+                        if not InverterTimeOn:
+                            return
+                        
                     # zwischen Sonnenauf und Sonneununtergang oder bei hoher MPPT-Spannung
                     if InverterTimeOn:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
@@ -444,8 +468,8 @@ class ProcessBase(object):
                                     #         self._DaikinWP_WATER_target_temperature + 5
                                     #     )
                                     WATER_max_temp = (
-                                            self._DaikinWP_WATER_temperature + 5
-                                        )
+                                        self._DaikinWP_WATER_temperature + 5
+                                    )
                                     if (
                                         self._SPH_TL3_BH_UP_Pactogrid_total
                                         > self.m_PV_Surplus_PerformanceMode
@@ -507,13 +531,13 @@ class ProcessBase(object):
                         f"doProcess_ControlDaikinWater: actual Power WR:{actpowerWR} = ( {self._SDM630_WR_total_power_active}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1} - actual Power WP:{ self._SDM630_WP_total_power_active})"
                     )
 
-                    if actpowerWR < (self.m_PV_Surplus_PerformanceMode / 10.0):
-                        # von performance to normal setzen
-                        if self._DaikinWP_WATER_tank_state == "performance":
-                            execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
-                            logger.info(
-                                f"doProcess_ControlDaikinWater: deactivate performance Mode"
-                            )
+                    # if actpowerWR < (self.m_PV_Surplus_PerformanceMode / 10.0):
+                    #     # von performance to normal setzen
+                    #     if self._DaikinWP_WATER_tank_state == "performance":
+                    #         execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
+                    #         logger.info(
+                    #             f"doProcess_ControlDaikinWater: deactivate performance Mode"
+                    #         )
 
                     if doCancel:
                         if self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
@@ -643,6 +667,12 @@ class ProcessBase(object):
 
         #  val = 0 if ret == None else ret  # Requires Python version >= 2.5
         if hours_actsecs >= self.m_REFRESHTIME:
+            self.getProcessValues()
+
+            self.doProcess_SPH_TL3_BH_UP()
+
+            self.doProcess_ControlDaikinWP(timestamp)
+
             payload = {
                 "CPU_Temperature": self.m_GPIODevice.getCpuTemperature(),
                 "is_PVSurplus": self.m_GPIODevice.is_PVSurplus(),
@@ -691,16 +721,6 @@ class ProcessBase(object):
             self.doPublishPayload(payload)
 
             self.m_TimeSpan.setActTime(timestamp)
-
-            self.getProcessValues()
-
-            self.doProcess_SPH_TL3_BH_UP()
-
-            self.doProcess_ControlDaikinWP(timestamp)
-
-            # else:
-            #     if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF:
-            #         self.m_SPH_TL3_BH_UP.set_OnOff(self, InverterStateONOff.ON)
 
     def setUsedDevices(self) -> None:
         if "SDM630_WR" in self.m_useddevices:
