@@ -223,14 +223,18 @@ class GPIODeviceHomeAutomation(object):
         # IN1-> IO07 (WP SmartGrid_0)
         # IN2-> IO08 (WP SmartGrid_1)
         if state_grid_1 > 0:
-            self._digitalout_07.on()
+            if not self._digitalout_07.is_active:
+                self._digitalout_07.on()
         else:
-            self._digitalout_07.off()
+            if self._digitalout_07.is_active:
+                self._digitalout_07.off()
 
         if state_grid_2 > 0:
-            self._digitalout_08.on()
+            if not self._digitalout_08.is_active:
+                self._digitalout_08.on()
         else:
-            self._digitalout_08.off()
+            if self._digitalout_08.is_active:
+                self._digitalout_08.off()
 
     def get_InverterFan(self) -> bool:
         return self._digitalout_11.is_active
