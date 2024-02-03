@@ -119,15 +119,14 @@ class ProcessBase(object):
         self.m_ctrldevice.sethostNameByNetId(SERVICE_DEVICE_NETID)
         # PV_SURPLUS=1000
         # PV_SURPLUS_PERFORMANCE_MODE=3000
+
+        self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
+        self.m_GPIODevice.set_SolarContact(False)
         
-        
-        self.m_GPIODevice.switch_SmartGridWP(
-                                        state_grid_1=0, state_grid_2=0
-                                    )
         self.m_PV_Surplus = self.m_tomlParser.get("daikin.PV_SURPLUS", 0)
-        self.m_PV_Surplus_PerformanceMode = self.m_tomlParser.get(
-            "daikin.PV_SURPLUS_PERFORMANCE_MODE", 0
-        )
+        # self.m_PV_Surplus_PerformanceMode = self.m_tomlParser.get(
+        #     "daikin.PV_SURPLUS_PERFORMANCE_MODE", 0
+        # )
 
         self.m_PV_Surplus_Time_secs = self.m_tomlParser.get(
             "daikin.PV_SURPLUS_TIME_SECS", 0
@@ -292,6 +291,7 @@ class ProcessBase(object):
     def doUnProcess_SPH_TL3_BH_UP(self):
         self.m_GPIODevice.switch_InverterFan(False)
         self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
+        self.m_GPIODevice.set_SolarContact(False)
 
     def doProcess_DaikinWP(self):
         if self.m_DaikinWP != None and self.m_SPH_TL3_BH_UP != None:
@@ -335,13 +335,11 @@ class ProcessBase(object):
                             f"doProcess_InverterState: switch_InverterFan(False)"
                         )
 
-
-
     def is_PVSurplus(self):
         if self.m_GPIODevice.is_PVSurplus():
             if self._SPH_TL3_BH_UP_Pactogrid_total > self.m_PV_Surplus:
                 return True
-        
+
         return False
 
     def doProcess_InverterState(self):
@@ -397,7 +395,7 @@ class ProcessBase(object):
                                     <= self._SPH_TL3_BH_UP_SOC
                                     <= self._SPH_TL3_BH_UP_SOC_Min * 1.2
                                 ):
-                                    if self._SDM630_WR_total_power_active <= 0:
+                                    if self._SDM630_WR_total_power_active < -3.0:
                                         self.m_SPH_TL3_BH_UP.set_OnOff(
                                             InverterStateONOff.OFF.value
                                         )
@@ -443,7 +441,7 @@ class ProcessBase(object):
                         )
                     )
 
-                    if  self.is_PVSurplus():
+                    if self.is_PVSurplus():
                         # wir speisen zur Zeit ein
                         if difference_secs >= self.m_PV_Surplus_Time_secs:
                             if (
@@ -458,6 +456,7 @@ class ProcessBase(object):
                                     logger.info(
                                         f"doProcess_ControlDaikinWater: activate Smart Grid"
                                     )
+                                    self.m_GPIODevice.is_WPClimateOn()
                                     self.m_GPIODevice.switch_SmartGridWP(
                                         state_grid_1=1, state_grid_2=1
                                     )
@@ -466,16 +465,12 @@ class ProcessBase(object):
                                         self._DaikinWP_WATER_temperature + 5
                                     )
 
-                                    if (
-                                        self._SPH_TL3_BH_UP_Pactogrid_total
-                                        > self.m_PV_Surplus_PerformanceMode
-                                    ):
-                                        execute = self.m_DaikinWP.set_WATER_tank_state(
-                                            "performance"
-                                        )
-                                        logger.info(
-                                            f"doProcess_ControlDaikinWater: activate performance Mode"
-                                        )
+                                    execute = self.m_DaikinWP.set_WATER_tank_state(
+                                        "performance"
+                                    )
+                                    logger.info(
+                                        f"doProcess_ControlDaikinWater: activate performance Mode"
+                                    )
 
                                     execute = (
                                         self.m_DaikinWP.set_WATER_target_temperature(
@@ -488,6 +483,7 @@ class ProcessBase(object):
                             self._DaikinWP_WATER_Start_temperature = (
                                 self._DaikinWP_WATER_temperature
                             )
+                            self.m_GPIODevice.set_SolarContact(True)
                             self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
                             self._DaikinWP_WATER_turn_onState = SwitchONOff.ON
 
@@ -509,9 +505,21 @@ class ProcessBase(object):
                     doCancel = False
                     if (
                         self._DaikinWP_WATER_temperature
-                        >= self._DaikinWP_WATER_target_temperature
+                        >= self.m_DaikinWP.get_WATER_max_temp()
                     ):
                         doCancel = True
+
+                    # bei iaktivem Smart-Grid:
+                    # 'Abschalten', wenn Wasser-Temperatur Target-Temperatur ist
+                    if not self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
+                        if self._DaikinWP_WATER_tank_state != "performance":
+                            doCancel = True
+
+                        if (
+                            self._DaikinWP_WATER_temperature
+                            >= self._DaikinWP_WATER_target_temperature
+                        ):
+                            doCancel = True
 
                     actpowerWR = (
                         self._SDM630_WR_total_power_active
@@ -529,13 +537,7 @@ class ProcessBase(object):
                                 # doCancel = True
                                 doCancel = True
                                 # Abschalten, wenn Pereformance Mode von Daikin App abgeschaltet wird
-                            if (not self.m_DAIKIN_USE_SMARTGRID_CONTACTS) and (
-                                self._DaikinWP_WATER_tank_state != "performance"
-                            ):
-                                doCancel = True
-                                logger.info(
-                                    f"doProcess_ControlDaikinWater: actual Power WR:{actpowerWR} = ( {self._SDM630_WR_total_power_active}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1} - actual Power WP:{ self._SDM630_WP_total_power_active})"
-                                )
+
 
                     else:
                         if actpowerWR > 100:
@@ -545,6 +547,11 @@ class ProcessBase(object):
                         self.m_GPIODevice.switch_SmartGridWP(
                             state_grid_1=0, state_grid_2=0
                         )
+                        self.m_GPIODevice.set_SolarContact(False)
+                        logger.info(
+                            f"doProcess_ControlDaikinWater: actual Power WR:{actpowerWR} = ( {self._SDM630_WR_total_power_active}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1} - actual Power WP:{ self._SDM630_WP_total_power_active})"
+                        )
+
                         logger.info(
                             f"doProcess_ControlDaikinWater: deactivate Smart Grid"
                         )
@@ -568,8 +575,9 @@ class ProcessBase(object):
         else:
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
+            self.m_GPIODevice.set_SolarContact(False)
             self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
-            
+
     def doProcess_ControlDaikinClimate(self, timestamp):
         if self.m_doProcessDaikinControlClimate > 0:
             if self._DaikinWP_CLIMATE_turn_on:
