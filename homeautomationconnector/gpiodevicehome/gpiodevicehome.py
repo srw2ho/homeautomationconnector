@@ -231,13 +231,13 @@ class GPIODeviceHomeAutomation(object):
             if self._digitalout_08.is_active:
                 self._digitalout_08.off()
 
-    def get_SolarContact(self) -> bool:
+    def get_enableHeating(self) -> bool:
         if self._digitalout_09 == None:
             return False
         
         return self._digitalout_09.is_active
 
-    def set_SolarContact(self, state: bool) -> bool:
+    def set_enableHeating(self, state: bool) -> bool:
         if self._digitalout_09 == None:
             return False
 

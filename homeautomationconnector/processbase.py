@@ -121,8 +121,8 @@ class ProcessBase(object):
         # PV_SURPLUS_PERFORMANCE_MODE=3000
 
         self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
-        self.m_GPIODevice.set_SolarContact(False)
-        
+        self.m_GPIODevice.set_enableHeating(False)
+
         self.m_PV_Surplus = self.m_tomlParser.get("daikin.PV_SURPLUS", 0)
         # self.m_PV_Surplus_PerformanceMode = self.m_tomlParser.get(
         #     "daikin.PV_SURPLUS_PERFORMANCE_MODE", 0
@@ -291,7 +291,7 @@ class ProcessBase(object):
     def doUnProcess_SPH_TL3_BH_UP(self):
         self.m_GPIODevice.switch_InverterFan(False)
         self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
-        self.m_GPIODevice.set_SolarContact(False)
+        self.m_GPIODevice.set_enableHeating(False)
 
     def doProcess_DaikinWP(self):
         if self.m_DaikinWP != None and self.m_SPH_TL3_BH_UP != None:
@@ -363,7 +363,7 @@ class ProcessBase(object):
 
                     else:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
-                            InverterOn = self._SDM630_WR_total_power_active >= 0
+                            InverterOn = self._SDM630_WR_total_power_active >= 10.0
                             if not InverterOn:
                                 self.m_TimeSpan_InverterState.setActTime(timestamp)
                             else:
@@ -483,7 +483,7 @@ class ProcessBase(object):
                             self._DaikinWP_WATER_Start_temperature = (
                                 self._DaikinWP_WATER_temperature
                             )
-                            self.m_GPIODevice.set_SolarContact(True)
+                            self.m_GPIODevice.set_enableHeating(True)
                             self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
                             self._DaikinWP_WATER_turn_onState = SwitchONOff.ON
 
@@ -521,33 +521,35 @@ class ProcessBase(object):
                         ):
                             doCancel = True
 
-                    actpowerWR = (
-                        self._SDM630_WR_total_power_active
-                        - self._SPH_TL3_BH_UP_Pdischarge1
-                        - self._SDM630_WP_total_power_active
-                    )
+                    if difference_secs >= self.m_PV_Surplus_Time_On_secs:
+                        actpowerWR = (
+                            self._SDM630_WR_total_power_active
+                            - self._SPH_TL3_BH_UP_Pdischarge1
+                            - self._SDM630_WP_total_power_active
+                        )
+                        if self._SDM630_WP_total_power_active <= 100:
+                            doCancel = True
 
-                    if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 0:
-                        if difference_secs >= self.m_PV_Surplus_Time_On_secs:
-                            # Daikin Water-Temperatur muss größer als Start Water-Temperatur sein!!
+                        if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 0:
+
                             if (
                                 self._DaikinWP_WATER_temperature
                                 >= self._DaikinWP_WATER_Start_temperature
                             ):
-                                # doCancel = True
                                 doCancel = True
-                                # Abschalten, wenn Pereformance Mode von Daikin App abgeschaltet wird
 
-
-                    else:
-                        if actpowerWR > 100:
-                            self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
+                        else:
+                            pass
+                            # if actpowerWR > 100:
+                            #     self.m_TimeSpan_Daikin_Control_Water.setActTime(
+                            #         timestamp
+                            #     )
 
                     if doCancel:
                         self.m_GPIODevice.switch_SmartGridWP(
                             state_grid_1=0, state_grid_2=0
                         )
-                        self.m_GPIODevice.set_SolarContact(False)
+                        self.m_GPIODevice.set_enableHeating(False)
                         logger.info(
                             f"doProcess_ControlDaikinWater: actual Power WR:{actpowerWR} = ( {self._SDM630_WR_total_power_active}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1} - actual Power WP:{ self._SDM630_WP_total_power_active})"
                         )
@@ -575,7 +577,7 @@ class ProcessBase(object):
         else:
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
-            self.m_GPIODevice.set_SolarContact(False)
+            self.m_GPIODevice.set_enableHeating(False)
             self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
     def doProcess_ControlDaikinClimate(self, timestamp):
@@ -691,45 +693,71 @@ class ProcessBase(object):
                 "CPU_Temperature": self.m_GPIODevice.getCpuTemperature(),
                 "is_PVSurplus": self.m_GPIODevice.is_PVSurplus(),
                 "is_WPClimateOn": self.m_GPIODevice.is_WPClimateOn(),
-                "SPH_TL3_BH_UP_OnOff": 0
-                if self._SPH_TL3_BH_UP_OnOff == None
-                else self._SPH_TL3_BH_UP_OnOff,
-                "DaikinWP_WATER_turn_on": False
-                if self._DaikinWP_WATER_turn_on == None
-                else self._DaikinWP_WATER_turn_on,
-                "DaikinWP_CLIMATE_turn_on": False
-                if self._DaikinWP_CLIMATE_turn_on == None
-                else self._DaikinWP_CLIMATE_turn_on,
-                "SPH_TL3_BH_UP_Inverter_Status": 0
-                if self._SPH_TL3_BH_UP_Inverter_Status == None
-                else self._SPH_TL3_BH_UP_Inverter_Status,
-                "DaikinWP_WATER_tank_state": ""
-                if self._DaikinWP_WATER_tank_state == None
-                else self._DaikinWP_WATER_tank_state,
-                "DaikinWP_WATER_temperature": 0.0
-                if self._DaikinWP_WATER_temperature == None
-                else self._DaikinWP_WATER_temperature,
-                "DaikinWP_CLIMATE_temperature": 0
-                if self._DaikinWP_CLIMATE_temperature == None
-                else self._DaikinWP_CLIMATE_temperature,
-                "DaikinWP_WATER_target_temperature": 0.0
-                if self._DaikinWP_WATER_target_temperature == None
-                else self._DaikinWP_WATER_target_temperature,
-                "DaikinWP_CLIMATE_target_temperature": 0.0
-                if self._DaikinWP_CLIMATE_target_temperature == None
-                else self._DaikinWP_CLIMATE_target_temperature,
-                "DaikinWP_Sensor_OutsideTemperature": 0
-                if self._DaikinWP_Sensor_OutsideTemperature == None
-                else self._DaikinWP_Sensor_OutsideTemperature,
-                "DaikinWP_Sensor_LeavingWaterTemperatur": 0
-                if self._DaikinWP_Sensor_LeavingWaterTemperatur == None
-                else self._DaikinWP_Sensor_LeavingWaterTemperatur,
-                "sunrise": ""
-                if self.m_today_sr == None
-                else self.m_today_sr.strftime("%Y-%m-%d, %H:%M:%S"),
-                "sunset": ""
-                if self.m_today_ss == None
-                else self.m_today_ss.strftime("%Y-%m-%d, %H:%M:%S"),
+                "SPH_TL3_BH_UP_OnOff": (
+                    0
+                    if self._SPH_TL3_BH_UP_OnOff == None
+                    else self._SPH_TL3_BH_UP_OnOff
+                ),
+                "DaikinWP_WATER_turn_on": (
+                    False
+                    if self._DaikinWP_WATER_turn_on == None
+                    else self._DaikinWP_WATER_turn_on
+                ),
+                "DaikinWP_CLIMATE_turn_on": (
+                    False
+                    if self._DaikinWP_CLIMATE_turn_on == None
+                    else self._DaikinWP_CLIMATE_turn_on
+                ),
+                "SPH_TL3_BH_UP_Inverter_Status": (
+                    0
+                    if self._SPH_TL3_BH_UP_Inverter_Status == None
+                    else self._SPH_TL3_BH_UP_Inverter_Status
+                ),
+                "DaikinWP_WATER_tank_state": (
+                    ""
+                    if self._DaikinWP_WATER_tank_state == None
+                    else self._DaikinWP_WATER_tank_state
+                ),
+                "DaikinWP_WATER_temperature": (
+                    0.0
+                    if self._DaikinWP_WATER_temperature == None
+                    else self._DaikinWP_WATER_temperature
+                ),
+                "DaikinWP_CLIMATE_temperature": (
+                    0
+                    if self._DaikinWP_CLIMATE_temperature == None
+                    else self._DaikinWP_CLIMATE_temperature
+                ),
+                "DaikinWP_WATER_target_temperature": (
+                    0.0
+                    if self._DaikinWP_WATER_target_temperature == None
+                    else self._DaikinWP_WATER_target_temperature
+                ),
+                "DaikinWP_CLIMATE_target_temperature": (
+                    0.0
+                    if self._DaikinWP_CLIMATE_target_temperature == None
+                    else self._DaikinWP_CLIMATE_target_temperature
+                ),
+                "DaikinWP_Sensor_OutsideTemperature": (
+                    0
+                    if self._DaikinWP_Sensor_OutsideTemperature == None
+                    else self._DaikinWP_Sensor_OutsideTemperature
+                ),
+                "DaikinWP_Sensor_LeavingWaterTemperatur": (
+                    0
+                    if self._DaikinWP_Sensor_LeavingWaterTemperatur == None
+                    else self._DaikinWP_Sensor_LeavingWaterTemperatur
+                ),
+                "sunrise": (
+                    ""
+                    if self.m_today_sr == None
+                    else self.m_today_sr.strftime("%Y-%m-%d, %H:%M:%S")
+                ),
+                "sunset": (
+                    ""
+                    if self.m_today_ss == None
+                    else self.m_today_ss.strftime("%Y-%m-%d, %H:%M:%S")
+                ),
             }
 
             self.doPublishPayload(payload)
