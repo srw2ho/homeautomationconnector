@@ -6,7 +6,8 @@ NAME = "homeautomationconnector"
 DEPENDENCIES_ARTIFACTORY = [
     "gpiozero",
     "RPi.GPIO",
-    "suntime"
+    "suntime",
+    "numpy"
 ]
 
 

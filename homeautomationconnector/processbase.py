@@ -16,6 +16,7 @@ from ppmpmessage.v3.device import Device
 from ppmpmessage.v3.util import local_now
 from ppmpmessage.convertor.simple_variables import SimpleVariables
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
+from homeautomationconnector.helpers.flyingaverage import FlyingAverage
 from homeautomationconnector.helpers.timespan import TimeSpan
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
@@ -85,13 +86,28 @@ class ProcessBase(object):
         self._DaikinWP_WATER_tank_state = None
         self._DaikinWP_WATER_temperature = None
 
+        self._SDM630_WP_total_power_active = 0.0
+
+        self._SDM630_WP_import_energy_active = 0.0
+
         self.m_lastday = 0
         self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation(
             "GPIODevice", tomlParser
         )
 
         self._DaikinWP_WATER_target_temperature_Saved = 0
-        self._DaikinWP_WATER_Start_temperature = 0
+        self._SDM630_WP_start_import_energy_active = 0.0
+        self._SDM630_WP_WATER_consume_energy = 0.0
+
+        self._SPH_TL3_BH_UP_Pactogrid_total_average = FlyingAverage(stack_size=5)
+
+        self._SPH_TL3_BH_UP_Pdischarge1_average = FlyingAverage(stack_size=5)
+
+        self._SDM630_WR_total_power_active_average = FlyingAverage(stack_size=5)
+
+        self._SDM630_WP_total_power_active_average = FlyingAverage(stack_size=5)
+
+        # self._DaikinWP_WATER_Start_temperature = 0
         self._SPH_TL3_BH_UP_PLocalLoad_total = 0
 
         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
@@ -164,9 +180,18 @@ class ProcessBase(object):
         self.m_LOCAL_LATIDUDE = self.m_tomlParser.get(
             "homeautomation.LOCAL_LATIDUDE", 49.30547
         )
-        self.LOCAL_LONGITUDE = self.m_tomlParser.get(
+        self.m_LOCAL_LONGITUDE = self.m_tomlParser.get(
             "homeautomation.LOCAL_LONGITUDE", 7.31442
         )
+
+        self.m_PV_MAX_WATER_CONSUME_ENERGY = self.m_tomlParser.get(
+            "daikin.PV_MAX_WATER_CONSUME_ENERGY", 1.0
+        )
+        
+        self.m_PV_MIN_WATER_CONSUME_ENERGY = self.m_tomlParser.get(
+            "daikin.PV_MIN_WATER_CONSUME_ENERGY", 0.5
+        )
+
 
         for key in self.m_useddevices.keys():
             self.m_DevicedoProcessing[key] = False
@@ -175,7 +200,7 @@ class ProcessBase(object):
 
     def getsunrise_sunsetTime(self):
         try:
-            sun = Sun(self.m_LOCAL_LATIDUDE, self.LOCAL_LONGITUDE)
+            sun = Sun(self.m_LOCAL_LATIDUDE, self.m_LOCAL_LONGITUDE)
 
             # Get today's sunrise and sunset in UTC
             self.m_today_sr = sun.get_sunrise_time().astimezone()
@@ -216,6 +241,10 @@ class ProcessBase(object):
                 self.m_SPH_TL3_BH_UP.get_Pactogrid_total()
             )
 
+            self._SPH_TL3_BH_UP_Pactogrid_total_average.add(
+                self._SPH_TL3_BH_UP_Pactogrid_total
+            )
+
             self._SPH_TL3_BH_UP_Pactouser_total = (
                 self.m_SPH_TL3_BH_UP.get_Pactouser_total()
             )
@@ -224,6 +253,9 @@ class ProcessBase(object):
                 self.m_SPH_TL3_BH_UP.get_PLocalLoad_total()
             )
             self._SPH_TL3_BH_UP_Pdischarge1 = self.m_SPH_TL3_BH_UP.get_Pdischarge1()
+
+            self._SPH_TL3_BH_UP_Pdischarge1_average.add(self._SPH_TL3_BH_UP_Pdischarge1)
+
             self._SPH_TL3_BH_UP_Pcharge1 = self.m_SPH_TL3_BH_UP.get_Pcharge1()
             self._SPH_TL3_BH_UP_SOC = self.m_SPH_TL3_BH_UP.get_BMS_SOC()
             self._SPH_TL3_BH_UP_SOC_Min = self.m_SPH_TL3_BH_UP.get_SOC_Min()
@@ -244,12 +276,24 @@ class ProcessBase(object):
                 self.m_SDM630_WP.get_total_power_active()
             )
 
+            self._SDM630_WR_total_power_active_average.add(
+                self._SDM630_WR_total_power_active
+            )
+
+            self._SDM630_WP_total_power_active_average.add(
+                self._SDM630_WP_total_power_active
+            )
+
+            self._SDM630_WP_import_energy_active = (
+                self.m_SDM630_WP.get_import_energy_active()
+            )
+
             if self._SPH_TL3_BH_UP_Pcharge1 > 0:
                 pass
 
             self._PLocalLoad_Household = (
                 self._SPH_TL3_BH_UP_PLocalLoad_total
-                - self._SDM630_WP_total_power_active
+                - self._SDM630_WP_total_power_active_average.get_avg()
             )
 
         if self.m_DaikinWP != None:
@@ -299,6 +343,13 @@ class ProcessBase(object):
                 return
             if not self.m_DevicedoProcessing["SPH_TL3_BH_UP"]:
                 return
+            if not self.m_DevicedoProcessing["SDM630_WR"]:
+                return
+
+            if not self.m_DevicedoProcessing["SDM630_WP"]:
+
+                return
+
             self.doProcess_ControlDaikinWP()
         pass
 
@@ -316,8 +367,29 @@ class ProcessBase(object):
     def doProcess_InverterTemperature(self):
         if self.m_SPH_TL3_BH_UP != None:
             # 0 == not in Subscibe List
-            if self._SPH_TL3_BH_UP_Temp1 != 0:
-                if self._SPH_TL3_BH_UP_Temp1 >= self.m_INVERTER_TEMPERATURE_FAN_ON:
+            if (
+                self._SPH_TL3_BH_UP_Temp1 != 0
+                or self._SPH_TL3_BH_UP_Temp2 != 0
+                or self._SPH_TL3_BH_UP_Temp3 != 0
+            ):
+
+                tempArray: list[float] = [
+                    self._SPH_TL3_BH_UP_Temp1,
+                    self._SPH_TL3_BH_UP_Temp2,
+                    self._SPH_TL3_BH_UP_Temp3,
+                ]
+                fanOn: bool = False
+                fanOff: bool = True
+                for temp in tempArray:
+                    if temp >= self.m_INVERTER_TEMPERATURE_FAN_ON:
+                        fanOn = True
+                        break
+                    # alle Temps müssen geprüft und kleiner sein!!
+                    if not (temp <= self.m_INVERTER_TEMPERATURE_FAN_OFF):
+                        fanOff = False
+
+                if fanOn:
+                    # if self._SPH_TL3_BH_UP_Temp1 >= self.m_INVERTER_TEMPERATURE_FAN_ON:
                     state = self.m_GPIODevice.get_InverterFan()
 
                     if not state:
@@ -326,7 +398,8 @@ class ProcessBase(object):
                             f"doProcess_InverterState: switch_InverterFan(True)"
                         )
 
-                if self._SPH_TL3_BH_UP_Temp1 <= self.m_INVERTER_TEMPERATURE_FAN_OFF:
+                # if self._SPH_TL3_BH_UP_Temp1 <= self.m_INVERTER_TEMPERATURE_FAN_OFF:
+                elif fanOff:
                     state = self.m_GPIODevice.get_InverterFan()
                     if state:
                         state = self.m_GPIODevice.switch_InverterFan(False)
@@ -337,7 +410,13 @@ class ProcessBase(object):
 
     def is_PVSurplus(self):
         if self.m_GPIODevice.is_PVSurplus():
-            if self._SPH_TL3_BH_UP_Pactogrid_total > self.m_PV_Surplus:
+
+            if (
+                self._SPH_TL3_BH_UP_Pactogrid_total_average.get_avg()
+                > self.m_PV_Surplus
+            ):
+
+                # if self._SPH_TL3_BH_UP_Pactogrid_total > self.m_PV_Surplus:
                 return True
 
         return False
@@ -363,7 +442,10 @@ class ProcessBase(object):
 
                     else:
                         if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
-                            InverterOn = self._SDM630_WR_total_power_active >= 10.0
+                            InverterOn = (
+                                self._SDM630_WR_total_power_active_average.get_avg()
+                                >= 10.0
+                            )
                             if not InverterOn:
                                 self.m_TimeSpan_InverterState.setActTime(timestamp)
                             else:
@@ -395,7 +477,10 @@ class ProcessBase(object):
                                     <= self._SPH_TL3_BH_UP_SOC
                                     <= self._SPH_TL3_BH_UP_SOC_Min * 1.2
                                 ):
-                                    if self._SDM630_WR_total_power_active < -3.0:
+                                    if (
+                                        self._SDM630_WR_total_power_active_average.get_avg()
+                                        < -3.0
+                                    ):
                                         self.m_SPH_TL3_BH_UP.set_OnOff(
                                             InverterStateONOff.OFF.value
                                         )
@@ -426,7 +511,7 @@ class ProcessBase(object):
                         # self.m_TimeSpan_Daikin_Control_Water.setStopTime(stop_time)
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.Waiting_On
                         logger.info(
-                            f"doProcess_ControlDaikinWater: {self._SPH_TL3_BH_UP_Pactogrid_total} > {self.m_PV_Surplus} "
+                            f"doProcess_ControlDaikinWater: {self._SPH_TL3_BH_UP_Pactogrid_total_average.get_avg()} > {self.m_PV_Surplus} "
                         )
 
                 elif self._DaikinWP_WATER_turn_onState == SwitchONOff.Waiting_On:
@@ -444,10 +529,22 @@ class ProcessBase(object):
                     if self.is_PVSurplus():
                         # wir speisen zur Zeit ein
                         if difference_secs >= self.m_PV_Surplus_Time_secs:
+                            # if self.m_GPIODevice.is_WPClimateOn():
+                            #     pass
+
+                            start_WaterOn: bool = True
+                            if (
+                                self._SDM630_WP_WATER_consume_energy
+                                >= self.m_PV_MAX_WATER_CONSUME_ENERGY
+                            ):
+                                start_WaterOn = False
                             if (
                                 self._DaikinWP_WATER_temperature
-                                < self.m_DaikinWP.get_WATER_max_temp()
+                                >= self.m_DaikinWP.get_WATER_max_temp()
                             ):
+                                start_WaterOn = False
+
+                            if start_WaterOn:
                                 self._DaikinWP_WATER_target_temperature_Saved = (
                                     self._DaikinWP_WATER_target_temperature
                                 )
@@ -456,7 +553,7 @@ class ProcessBase(object):
                                     logger.info(
                                         f"doProcess_ControlDaikinWater: activate Smart Grid"
                                     )
-                                    self.m_GPIODevice.is_WPClimateOn()
+                                    # self.m_GPIODevice.is_WPClimateOn()
                                     self.m_GPIODevice.switch_SmartGridWP(
                                         state_grid_1=1, state_grid_2=1
                                     )
@@ -480,20 +577,26 @@ class ProcessBase(object):
                                     logger.info(
                                         f"doProcess_ControlDaikinWater: set_WATER_target_temperature({WATER_max_temp})"
                                     )
-                            self._DaikinWP_WATER_Start_temperature = (
-                                self._DaikinWP_WATER_temperature
-                            )
+                            # self._DaikinWP_WATER_Start_temperature = (
+                            #     self._DaikinWP_WATER_temperature
+                            # )
+
+
                             self.m_GPIODevice.set_enableHeating(True)
+                            self._SDM630_WP_start_import_energy_active = (
+                                self._SDM630_WP_import_energy_active
+                            )
                             self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
                             self._DaikinWP_WATER_turn_onState = SwitchONOff.ON
 
                     else:
                         logger.info(
-                            f"doProcess_ControlDaikinWater: {self._SPH_TL3_BH_UP_Pactogrid_total} < {self.m_PV_Surplus}"
+                            f"doProcess_ControlDaikinWater: {self._SPH_TL3_BH_UP_Pactogrid_total_average.get_avg()} < {self.m_PV_Surplus}"
                         )
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
                 elif self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
+
                     difference = (
                         self.m_TimeSpan_Daikin_Control_Water.getTimeSpantoActTime()
                     )
@@ -522,36 +625,55 @@ class ProcessBase(object):
                             doCancel = True
 
                     if difference_secs >= self.m_PV_Surplus_Time_On_secs:
+
                         actpowerWR = (
-                            self._SDM630_WR_total_power_active
-                            - self._SPH_TL3_BH_UP_Pdischarge1
-                            - self._SDM630_WP_total_power_active
+                            self._SDM630_WR_total_power_active_average.get_avg()
+                            - self._SPH_TL3_BH_UP_Pdischarge1_average.get_avg()
+                            - self._SDM630_WP_total_power_active_average.get_avg()
                         )
-                        if self._SDM630_WP_total_power_active <= 100:
+                        if self._SDM630_WP_total_power_active_average.get_avg() <= 100:
+                            logger.info(
+                                f"doProcess_ControlDaikinWater: switch Off WP: performance :{self._SDM630_WP_total_power_active_average.get_avg()}  <= 100"
+                            )
+
                             doCancel = True
 
-                        if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 0:
+                        # if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 100:
+                        if actpowerWR < 100:
 
                             if (
-                                self._DaikinWP_WATER_temperature
-                                >= self._DaikinWP_WATER_Start_temperature
-                            ):
+                                self._SDM630_WP_import_energy_active
+                                - self._SDM630_WP_start_import_energy_active
+                            ) >= self.m_PV_MIN_WATER_CONSUME_ENERGY:
                                 doCancel = True
 
-                        else:
-                            pass
-                            # if actpowerWR > 100:
-                            #     self.m_TimeSpan_Daikin_Control_Water.setActTime(
-                            #         timestamp
-                            #     )
+                            # if (
+                            #     self._DaikinWP_WATER_temperature
+                            #     >= self._DaikinWP_WATER_Start_temperature
+                            # ):
+                            #     doCancel = True
+
+                        # else:
+                        #     if actpowerWR > 300:
+                        #         self.m_TimeSpan_Daikin_Control_Water.setActTime(
+                        #             timestamp
+                        #         )
 
                     if doCancel:
+                        self._SDM630_WP_WATER_consume_energy = (
+                            self._SDM630_WP_WATER_consume_energy
+                            + (
+                                self._SDM630_WP_import_energy_active
+                                - self._SDM630_WP_start_import_energy_active
+                            )
+                        )
                         self.m_GPIODevice.switch_SmartGridWP(
                             state_grid_1=0, state_grid_2=0
                         )
+
                         self.m_GPIODevice.set_enableHeating(False)
                         logger.info(
-                            f"doProcess_ControlDaikinWater: actual Power WR:{actpowerWR} = ( {self._SDM630_WR_total_power_active}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1} - actual Power WP:{ self._SDM630_WP_total_power_active})"
+                            f"doProcess_ControlDaikinWater: actual Power :{actpowerWR} = (actual Power WR: {self._SDM630_WR_total_power_active_average.get_avg()}- actual Discharge: {self._SPH_TL3_BH_UP_Pdischarge1_average.get_avg()} - actual Power WP:{ self._SDM630_WP_total_power_active_average.get_avg()})"
                         )
 
                         logger.info(
@@ -663,6 +785,15 @@ class ProcessBase(object):
         except Exception as e:
             logger.error(f"doPublishPayload: error:{e}")
 
+    def doinitialstate(self):
+        self._SDM630_WP_start_import_energy_active = 0.0
+        self._SDM630_WP_WATER_consume_energy = 0.0
+        self._SPH_TL3_BH_UP_Pactogrid_total_average.reset()
+        self._SPH_TL3_BH_UP_Pdischarge1_average.reset()
+
+        self._SDM630_WR_total_power_active_average.reset()
+        self._SDM630_WP_total_power_active_average.reset()
+
     def doProcess(self):
         timestamp = datetime.now(timezone.utc).astimezone()
         difference_act = self.m_TimeSpan.getTimeSpantoActTime()
@@ -678,6 +809,8 @@ class ProcessBase(object):
         # all 5 hourse get sunrise/sunset time
         if self.m_lastday != actualday:
             self.getsunrise_sunsetTime()
+            self.doinitialstate()
+
             self.m_lastday = actualday
             # self.m_TimeSpan_Sunrise.setActTime(timestamp)
 
