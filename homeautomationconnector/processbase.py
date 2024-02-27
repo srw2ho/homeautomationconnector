@@ -567,16 +567,13 @@ class ProcessBase(object):
                                     logger.info(
                                         f"doProcess_ControlDaikinWater: set_WATER_target_temperature({WATER_max_temp})"
                                     )
-                            # self._DaikinWP_WATER_Start_temperature = (
-                            #     self._DaikinWP_WATER_temperature
-                            # )
 
-                            self.m_GPIODevice.set_enableHeating(True)
-                            self._SDM630_WP_start_import_energy_active = (
-                                self._SDM630_WP_import_energy_active
-                            )
-                            self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
-                            self._DaikinWP_WATER_turn_onState = SwitchONOff.ON
+                                self.m_GPIODevice.set_enableHeating(True)
+                                self._SDM630_WP_start_import_energy_active = (
+                                    self._SDM630_WP_import_energy_active
+                                )
+                                self.m_TimeSpan_Daikin_Control_Water.setActTime(timestamp)
+                                self._DaikinWP_WATER_turn_onState = SwitchONOff.ON
 
                     else:
                         logger.info(
