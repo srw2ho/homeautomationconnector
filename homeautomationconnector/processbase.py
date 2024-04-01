@@ -445,8 +445,11 @@ class ProcessBase(object):
 
                     # if timestamp > timestamp_sr - timedelta(hours=1):
                     #     pass
-
-                    InverterTimeOn = timestamp_sr <= timestamp <= timestamp_ss
+                    InverterTimeOn = False
+                    if timestamp_sr < timestamp_ss:
+                        InverterTimeOn = timestamp_sr <= timestamp <= timestamp_ss
+                    else:
+                        InverterTimeOn = timestamp >= timestamp_sr
 
                     # zwischen Sonnenauf und Sonneununtergang oder bei hoher MPPT-Spannung
                     if InverterTimeOn:
@@ -552,8 +555,6 @@ class ProcessBase(object):
 
     def cancel_WaterHeating(self):
 
-
-
         logger.info(
             f"doProcess_ControlDaikinWater: consumed Energy:{self._SDM630_WP_WATER_consume_energy}"
         )
@@ -619,17 +620,12 @@ class ProcessBase(object):
             if doCancel:
                 return True
 
-
-
-        if (
-                self._SDM630_WP_WATER_consume_energy
-                >= self.m_PV_MAX_WATER_CONSUME_ENERGY
-            ):
+        if self._SDM630_WP_WATER_consume_energy >= self.m_PV_MAX_WATER_CONSUME_ENERGY:
             doCancel = True
             self._DaikinWP_WATER_Cancel_from_WP = True
             logger.info(
-                    f"doProcess_ControlDaikinWater: WP already consumed Energy: {self._SDM630_WP_WATER_consume_energy} > MAX. Consume Energy: {self.m_PV_MAX_WATER_CONSUME_ENERGY} -> Cancel"
-                )
+                f"doProcess_ControlDaikinWater: WP already consumed Energy: {self._SDM630_WP_WATER_consume_energy} > MAX. Consume Energy: {self.m_PV_MAX_WATER_CONSUME_ENERGY} -> Cancel"
+            )
 
         if difference_secs >= self.m_PV_Surplus_Time_On_secs:
 
@@ -643,7 +639,10 @@ class ProcessBase(object):
                 # if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 100:
                 if self._availablepowerWR < 100:
 
-                    if self._SDM630_WP_WATER_consume_energy >= self.m_PV_MIN_WATER_CONSUME_ENERGY:
+                    if (
+                        self._SDM630_WP_WATER_consume_energy
+                        >= self.m_PV_MIN_WATER_CONSUME_ENERGY
+                    ):
                         doCancel = True
                         logger.info(
                             f"doProcess_ControlDaikinWater: actual available WR Power :{self._availablepowerWR } < 100 Watt -> Cancel"
