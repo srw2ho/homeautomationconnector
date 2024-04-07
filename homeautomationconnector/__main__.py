@@ -42,7 +42,7 @@ from homeautomationconnector.gpiodevicehome.gpiodevicehome import GPIODeviceHome
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.modbusdevicebase import ModBusDeviceBase
-
+from homeautomationconnector.espaltherma.espalthermadevice import ESPAltherma
 from homeautomationconnector.processbase import ProcessBase
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 
@@ -144,6 +144,10 @@ def createDeviceByKey(
     if key == "DaikinWP":
         DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
         return DaikinWP
+    
+    if key == "ESPAltherma":
+        espAltherma = ESPAltherma("ESPAltherma", mqttServiceDeviceClient)
+        return espAltherma
     
     return None
 

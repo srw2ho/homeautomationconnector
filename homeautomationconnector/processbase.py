@@ -9,6 +9,7 @@ from tomlconfig.tomlutils import TomlParser
 from mqttconnector.MQTTServiceDevice import MQTTServiceDeviceClient
 from ppmpmessage.v3.device_state import DeviceState
 from homeautomationconnector.daikindevice.daikin import DaikinDevice
+from homeautomationconnector.espaltherma.espalthermadevice import ESPAltherma
 from homeautomationconnector.gpiodevicehome.gpiodevicehome import (
     GPIODeviceHomeAutomation,
 )
@@ -67,6 +68,7 @@ class ProcessBase(object):
         self.m_SPH_TL3_BH_UP: GrowattDevice = None
         self.m_kebaWallbox: KeykontactP30 = None
         self.m_DaikinWP: DaikinDevice = None
+        self.m_ESPAltherma: ESPAltherma = None
         self.m_tomlParser = tomlParser
 
         self.m_today_sr = None
@@ -249,6 +251,64 @@ class ProcessBase(object):
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
     def getProcessValues(self):
+        if self.m_ESPAltherma != None:
+            self.m_ESPAltherma_I_U_operation_mode = (
+                self.m_ESPAltherma.get_I_U_operation_mode()
+            )
+            self.m_ESPAltherma_HPSU_Bypass_valve_position = (
+                self.m_ESPAltherma.get_HPSU_Bypass_valve_position()
+            )
+            self.m_ESPAltherma_HPSU_Tank_valve_position = (
+                self.m_ESPAltherma.get_HPSU_Tank_valve_position()
+            )
+            self.m_ESPAltherma_HPSU_Mixed_leaving_water_R7T_DLWA2 = (
+                self.m_ESPAltherma.get_HPSU_Mixed_leaving_water_R7T_DLWA2()
+            )
+            self.m_ESPAltherma_Water_pump_signal = (
+                self.m_ESPAltherma.get_Water_pump_signal()
+            )
+            self.m_ESPAltherma_Water_pressure = self.m_ESPAltherma.get_Water_pressure()
+            self.m_ESPAltherma_Flow_sensor_l_min = (
+                self.m_ESPAltherma.get_Flow_sensor_l_min()
+            )
+            self.m_ESPAltherma_DHW_tank_temp_R5T = (
+                self.m_ESPAltherma.get_DHW_tank_temp_R5T()
+            )
+            self.m_ESPAltherma_Inlet_water_temp_R4T = (
+                self.m_ESPAltherma.get_Inlet_water_temp_R4T()
+            )
+            self.m_ESPAltherma_Refrig_Temp_liquid_side_R3T = (
+                self.m_ESPAltherma.get_Refrig_Temp_liquid_side_R3T()
+            )
+            self.m_ESPAltherma_Leaving_water_temp_BUH_R2T = (
+                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R2T()
+            )
+            self.m_ESPAltherma_Leaving_water_temp_BUH_R1T = (
+                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R1T()
+            )
+            self.m_ESPAltherma_DHW_setpoint = self.m_ESPAltherma.get_DHW_setpoint()
+            self.m_ESPAltherma_LW_setpoint_main = (
+                self.m_ESPAltherma.get_LW_setpoint_main()
+            )
+            self.m_ESPAltherma_INV_frequency_rps = (
+                self.m_ESPAltherma.get_INV_frequency_rps()
+            )
+            self.m_ESPAltherma_INV_primary_current = (
+                self.m_ESPAltherma.get_INV_primary_current()
+            )
+            self.m_ESPAltherma_INV_Heat_Energy = (
+                self.m_ESPAltherma_Flow_sensor_l_min
+                * 1.16
+                * 60
+                * (
+                    self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
+                    - self.m_ESPAltherma_Inlet_water_temp_R4T
+                )
+            )
+            self.m_ESPAltherma_INV_electric_Energy =  self.m_ESPAltherma_INV_primary_current * 400
+              
+
+            
         if self.m_SPH_TL3_BH_UP != None:
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
@@ -952,6 +1012,9 @@ class ProcessBase(object):
 
         if "DaikinWP" in self.m_useddevices:
             self.m_DaikinWP = self.m_useddevices["DaikinWP"]
+
+        if "ESPAltherma" in self.m_useddevices:
+            self.m_ESPAltherma = self.m_useddevices["ESPAltherma"]
 
     def doWaitForInitialized(self) -> bool:
         self.m_mqttDeviceClient.doInit()
