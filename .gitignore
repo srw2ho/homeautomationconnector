@@ -26,3 +26,4 @@ homeautomationconnector/helpers/__pycache__/timespan.cpython-39.pyc
 homeautomationconnector/gpiodevicehome/__pycache__/gpiodevice.cpython-39.pyc
 homeautomationconnector/gpiodevicehome/__pycache__/gpiodevicehome.cpython-39.pyc
 homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
+homeautomationconnector/espaltherma/__pycache__/espalthermadevice.cpython-39.pyc

@@ -251,64 +251,7 @@ class ProcessBase(object):
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
     def getProcessValues(self):
-        if self.m_ESPAltherma != None:
-            self.m_ESPAltherma_I_U_operation_mode = (
-                self.m_ESPAltherma.get_I_U_operation_mode()
-            )
-            self.m_ESPAltherma_HPSU_Bypass_valve_position = (
-                self.m_ESPAltherma.get_HPSU_Bypass_valve_position()
-            )
-            self.m_ESPAltherma_HPSU_Tank_valve_position = (
-                self.m_ESPAltherma.get_HPSU_Tank_valve_position()
-            )
-            self.m_ESPAltherma_HPSU_Mixed_leaving_water_R7T_DLWA2 = (
-                self.m_ESPAltherma.get_HPSU_Mixed_leaving_water_R7T_DLWA2()
-            )
-            self.m_ESPAltherma_Water_pump_signal = (
-                self.m_ESPAltherma.get_Water_pump_signal()
-            )
-            self.m_ESPAltherma_Water_pressure = self.m_ESPAltherma.get_Water_pressure()
-            self.m_ESPAltherma_Flow_sensor_l_min = (
-                self.m_ESPAltherma.get_Flow_sensor_l_min()
-            )
-            self.m_ESPAltherma_DHW_tank_temp_R5T = (
-                self.m_ESPAltherma.get_DHW_tank_temp_R5T()
-            )
-            self.m_ESPAltherma_Inlet_water_temp_R4T = (
-                self.m_ESPAltherma.get_Inlet_water_temp_R4T()
-            )
-            self.m_ESPAltherma_Refrig_Temp_liquid_side_R3T = (
-                self.m_ESPAltherma.get_Refrig_Temp_liquid_side_R3T()
-            )
-            self.m_ESPAltherma_Leaving_water_temp_BUH_R2T = (
-                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R2T()
-            )
-            self.m_ESPAltherma_Leaving_water_temp_BUH_R1T = (
-                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R1T()
-            )
-            self.m_ESPAltherma_DHW_setpoint = self.m_ESPAltherma.get_DHW_setpoint()
-            self.m_ESPAltherma_LW_setpoint_main = (
-                self.m_ESPAltherma.get_LW_setpoint_main()
-            )
-            self.m_ESPAltherma_INV_frequency_rps = (
-                self.m_ESPAltherma.get_INV_frequency_rps()
-            )
-            self.m_ESPAltherma_INV_primary_current = (
-                self.m_ESPAltherma.get_INV_primary_current()
-            )
-            self.m_ESPAltherma_INV_Heat_Energy = (
-                self.m_ESPAltherma_Flow_sensor_l_min
-                * 1.16
-                * 60
-                * (
-                    self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
-                    - self.m_ESPAltherma_Inlet_water_temp_R4T
-                )
-            )
-            self.m_ESPAltherma_INV_electric_Energy =  self.m_ESPAltherma_INV_primary_current * 400
-              
-
-            
+      
         if self.m_SPH_TL3_BH_UP != None:
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
@@ -376,6 +319,123 @@ class ProcessBase(object):
                 self._SPH_TL3_BH_UP_PLocalLoad_total
                 - self._SDM630_WP_total_power_active_average.get_avg()
             )
+
+        if self.m_ESPAltherma != None:
+    
+            self.m_ESPAltherma_operation_Mode = self.m_ESPAltherma.get_Operation_Mode()
+
+            self.m_ESPAltherma_I_U_operation_mode = (
+                self.m_ESPAltherma.get_I_U_operation_mode()
+            )
+            self.m_ESPAltherma_Thermostat_ON_OFF = (
+                self.m_ESPAltherma.get_Thermostat_ON_OFF()
+            )
+
+            self.m_ESPAltherma_Defrost_Operation = (
+                self.m_ESPAltherma.get_Defrost_Operation()
+            )
+
+            self.m_ESPAltherma_HPSU_Bypass_valve_position = (
+                self.m_ESPAltherma.get_HPSU_Bypass_valve_position()
+            )
+            self.m_ESPAltherma_HPSU_Tank_valve_position = (
+                self.m_ESPAltherma.get_HPSU_Tank_valve_position()
+            )
+            self.m_ESPAltherma_HPSU_Mixed_leaving_water_R7T_DLWA2 = (
+                self.m_ESPAltherma.get_HPSU_Mixed_leaving_water_R7T_DLWA2()
+            )
+            self.m_ESPAltherma_Water_pump_signal = (
+                self.m_ESPAltherma.get_Water_pump_signal()
+            )
+            self.m_ESPAltherma_Water_pressure = self.m_ESPAltherma.get_Water_pressure()
+            self.m_ESPAltherma_Flow_sensor_l_min = (
+                self.m_ESPAltherma.get_Flow_sensor_l_min()
+            )
+            self.m_ESPAltherma_DHW_tank_temp_R5T = (
+                self.m_ESPAltherma.get_DHW_tank_temp_R5T()
+            )
+            self.m_ESPAltherma_Inlet_water_temp_R4T = (
+                self.m_ESPAltherma.get_Inlet_water_temp_R4T()
+            )
+            self.m_ESPAltherma_Refrig_Temp_liquid_side_R3T = (
+                self.m_ESPAltherma.get_Refrig_Temp_liquid_side_R3T()
+            )
+            self.m_ESPAltherma_Leaving_water_temp_BUH_R2T = (
+                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R2T()
+            )
+            self.m_ESPAltherma_Leaving_water_temp_BUH_R1T = (
+                self.m_ESPAltherma.get_Leaving_water_temp_BUH_R1T()
+            )
+            self.m_ESPAltherma_DHW_setpoint = self.m_ESPAltherma.get_DHW_setpoint()
+            self.m_ESPAltherma_LW_setpoint_main = (
+                self.m_ESPAltherma.get_LW_setpoint_main()
+            )
+            self.m_ESPAltherma_INV_frequency_rps = (
+                self.m_ESPAltherma.get_INV_frequency_rps()
+            )
+            self.m_ESPAltherma_INV_primary_current = (
+                self.m_ESPAltherma.get_INV_primary_current()
+            )
+            
+            if self.m_ESPAltherma_operation_Mode == "Fan Only":
+                pass
+
+            if self.m_ESPAltherma_operation_Mode == "Heating":
+                pass
+            
+            if self.m_ESPAltherma_Defrost_Operation == "OFF":
+                pass
+
+           
+            if self.m_ESPAltherma_Thermostat_ON_OFF == "ON":
+                pass        
+            
+            if self.m_ESPAltherma_I_U_operation_mode == "Heating":
+                if self.m_ESPAltherma_Thermostat_ON_OFF == "ON":
+                    
+                    self.m_ESPAltherma_INV_Heat_Energy = (
+                        self.m_ESPAltherma_Flow_sensor_l_min
+                        * 1.16
+                        * 60
+                        * (
+                            self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
+                            - self.m_ESPAltherma_Inlet_water_temp_R4T
+                        )
+                    )
+                    self.m_ESPAltherma_INV_electric_Heat_Energy = (
+                        self.m_ESPAltherma_INV_primary_current * 400
+                    )
+                    if self.m_ESPAltherma_INV_electric_Heat_Energy !=0:
+                        self.m_ESPAltherma_INV_Heat_COP = (
+                            self.m_ESPAltherma_INV_Heat_Energy
+                            / self.m_ESPAltherma_INV_electric_Heat_Energy
+                        )
+                    else: self.m_ESPAltherma_INV_Heat_COP = 0.0
+                else:
+                    self.m_ESPAltherma_INV_Heat_Energy = 0.0
+                    self.m_ESPAltherma_INV_Heat_COP = 0.0
+                        
+
+            if self.m_ESPAltherma_I_U_operation_mode == "DHW":
+                self.m_ESPAltherma_INV_DHW_Energy = (
+                    self.m_ESPAltherma_Flow_sensor_l_min
+                    * 1.16
+                    * 60
+                    * (
+                        self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
+                        - self.m_ESPAltherma_Inlet_water_temp_R4T
+                    )
+                )
+                self.m_ESPAltherma_INV_electric_DHWEnergy = (
+                    self.m_ESPAltherma_INV_primary_current * 400
+                )
+                if self.m_ESPAltherma_INV_electric_DHWEnergy != 0:
+                    self.m_ESPAltherma_INV_DHW_COP = (
+                        self.m_ESPAltherma_INV_DHW_Energy
+                        / self.m_ESPAltherma_INV_electric_DHWEnergy
+                    )
+                else:
+                    self.m_ESPAltherma_INV_DHW_COP = 0.0
 
         if self.m_DaikinWP != None and self.m_DevicedoProcessing["DaikinWP"]:
             self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
