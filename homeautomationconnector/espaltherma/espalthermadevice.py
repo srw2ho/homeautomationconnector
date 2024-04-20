@@ -399,9 +399,9 @@ class ESPAltherma(ModBusDeviceBase):
         return val
 
     #   Heating | DHW | Heating+DHW
-    def get_I_U_operation_mode(self) -> float:
+    def get_I_U_operation_mode(self) -> str:
         ret = self.m_mqttDeviceClient.getValueByKey(
             self.getKeyByDeviceName("I/U operation mode")
         )
-        val = 0.0 if ret == None else ret
+        val = "" if ret == None else ret
         return val

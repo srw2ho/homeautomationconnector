@@ -126,6 +126,16 @@ class ProcessBase(object):
 
         self._SDM630_WP_total_power_active_average = FlyingAverage(stack_size=5)
 
+        self.m_ESPAltherma_Flow_sensor_l_min_average = FlyingAverage(stack_size=5)
+        self.m_ESPAltherma_INV_primary_current_average = FlyingAverage(stack_size=5)
+
+        self.m_ESPAltherma_operation_Mode =""
+        self.m_ESPAltherma_INV_Heat_Energy = None
+        self.m_ESPAltherma_INV_Heat_COP = None
+        self.m_ESPAltherma_INV_electric_HeatEnergy = None
+        self.m_ESPAltherma_INV_DHW_COP = None
+        self.m_ESPAltherma_INV_electric_DHWEnergy = None
+
         # self._DaikinWP_WATER_Start_temperature = 0
         self._SPH_TL3_BH_UP_PLocalLoad_total = 0
 
@@ -211,7 +221,18 @@ class ProcessBase(object):
             "daikin.PV_MIN_WATER_CONSUME_ENERGY", 0.5
         )
 
+        # Sollwert unter welchem die Wasseraufbereitung  gestartet wird
+        self.m_MIN_WATER_TEMPERATURE = self.m_tomlParser.get(
+            "daikin.MIN_WATER_TEMPERATURE", 60.0
+        )
+
+        # Sollwert ab welcher noch die Wasseraufbereitung abgebruchen wird
+        self.m_MAX_WATER_TEMPERATURE = self.m_tomlParser.get(
+            "daikin.MAX_WATER_TEMPERATURE", 65.0
+        )
+
         self.m_USE_DAIKIN_API = self.m_tomlParser.get("daikin.USE_DAIKIN_API", 0)
+        self.m_USE_ALTHERMA_API = self.m_tomlParser.get("daikin.USE_ALTHERMA_API", 1)
 
         for key in self.m_useddevices.keys():
             self.m_DevicedoProcessing[key] = False
@@ -251,8 +272,8 @@ class ProcessBase(object):
     #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
 
     def getProcessValues(self):
-      
-        if self.m_SPH_TL3_BH_UP != None:
+
+        if self.m_SPH_TL3_BH_UP != None and self.m_DevicedoProcessing["SPH_TL3_BH_UP"]:
             self._SPH_TL3_BH_UP_OnOff = self.m_SPH_TL3_BH_UP.get_OnOff()
             self._SPH_TL3_BH_UP_Ppv = self.m_SPH_TL3_BH_UP.get_Ppv()
             self._SPH_TL3_BH_UP_Ppv1 = self.m_SPH_TL3_BH_UP.get_Ppv1()
@@ -291,7 +312,7 @@ class ProcessBase(object):
 
             self._SPH_TL3_BH_UP_Temp3 = self.m_SPH_TL3_BH_UP.get_Temp3()
 
-        if (self.m_SDM630_WP != None) and (self.m_SDM630_WR != None):
+        if (self.m_SDM630_WP != None) and (self.m_SDM630_WR != None) and self.m_DevicedoProcessing["SDM630_WP"] and  self.m_DevicedoProcessing["SDM630_WR"]:
             self._SDM630_WR_total_power_active = (
                 self.m_SDM630_WR.get_total_power_active()
             )
@@ -320,8 +341,8 @@ class ProcessBase(object):
                 - self._SDM630_WP_total_power_active_average.get_avg()
             )
 
-        if self.m_ESPAltherma != None:
-    
+        if self.m_ESPAltherma != None and self.m_DevicedoProcessing["ESPAltherma"]:
+
             self.m_ESPAltherma_operation_Mode = self.m_ESPAltherma.get_Operation_Mode()
 
             self.m_ESPAltherma_I_U_operation_mode = (
@@ -351,6 +372,19 @@ class ProcessBase(object):
             self.m_ESPAltherma_Flow_sensor_l_min = (
                 self.m_ESPAltherma.get_Flow_sensor_l_min()
             )
+
+            self.m_ESPAltherma_INV_primary_current = (
+                self.m_ESPAltherma.get_INV_primary_current()
+            )
+
+            self.m_ESPAltherma_Flow_sensor_l_min_average.add(
+                self.m_ESPAltherma_Flow_sensor_l_min
+            )
+
+            self.m_ESPAltherma_INV_primary_current_average.add(
+                self.m_ESPAltherma_INV_primary_current
+            )
+
             self.m_ESPAltherma_DHW_tank_temp_R5T = (
                 self.m_ESPAltherma.get_DHW_tank_temp_R5T()
             )
@@ -373,69 +407,97 @@ class ProcessBase(object):
             self.m_ESPAltherma_INV_frequency_rps = (
                 self.m_ESPAltherma.get_INV_frequency_rps()
             )
-            self.m_ESPAltherma_INV_primary_current = (
-                self.m_ESPAltherma.get_INV_primary_current()
-            )
-            
+
             if self.m_ESPAltherma_operation_Mode == "Fan Only":
                 pass
 
             if self.m_ESPAltherma_operation_Mode == "Heating":
                 pass
-            
+
             if self.m_ESPAltherma_Defrost_Operation == "OFF":
                 pass
 
-           
             if self.m_ESPAltherma_Thermostat_ON_OFF == "ON":
-                pass        
-            
-            if self.m_ESPAltherma_I_U_operation_mode == "Heating":
+                pass
+
+            doCalculate_Heating: bool = False
+            doCalculate_DWH: bool = False
+            # self.m_ESPAltherma_Flow_sensor_l_min_average
+            if "Heating" in self.m_ESPAltherma_I_U_operation_mode:
                 if self.m_ESPAltherma_Thermostat_ON_OFF == "ON":
-                    
-                    self.m_ESPAltherma_INV_Heat_Energy = (
-                        self.m_ESPAltherma_Flow_sensor_l_min
-                        * 1.16
-                        * 60
-                        * (
+
+                    if self.m_ESPAltherma_INV_primary_current == 0:
+                        delta_T = (
+                            self.m_ESPAltherma_HPSU_Mixed_leaving_water_R7T_DLWA2
+                            - self.m_ESPAltherma_Inlet_water_temp_R4T
+                        )
+                    else:
+                        delta_T = (
                             self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
                             - self.m_ESPAltherma_Inlet_water_temp_R4T
                         )
+
+                    self.m_ESPAltherma_INV_Heat_Energy = (
+                        self.m_ESPAltherma_Flow_sensor_l_min_average.get_avg()
+                        * 1.16
+                        * 60
+                        * delta_T
                     )
-                    self.m_ESPAltherma_INV_electric_Heat_Energy = (
-                        self.m_ESPAltherma_INV_primary_current * 400
+
+                    self.m_ESPAltherma_INV_electric_HeatEnergy = (
+                        1.732
+                        * self.m_ESPAltherma_INV_primary_current_average.get_avg()
+                        * self.m_SDM630_WR.get_total_power_factor()
+                        * self.m_SDM630_WR.get_voltage_ll()
                     )
-                    if self.m_ESPAltherma_INV_electric_Heat_Energy !=0:
+
+                    if self._SDM630_WP_total_power_active_average.get_avg() != 0:
                         self.m_ESPAltherma_INV_Heat_COP = (
                             self.m_ESPAltherma_INV_Heat_Energy
-                            / self.m_ESPAltherma_INV_electric_Heat_Energy
+                            / self._SDM630_WP_total_power_active_average.get_avg()
                         )
-                    else: self.m_ESPAltherma_INV_Heat_COP = 0.0
-                else:
-                    self.m_ESPAltherma_INV_Heat_Energy = 0.0
-                    self.m_ESPAltherma_INV_Heat_COP = 0.0
-                        
+                    doCalculate_Heating = True
 
-            if self.m_ESPAltherma_I_U_operation_mode == "DHW":
-                self.m_ESPAltherma_INV_DHW_Energy = (
-                    self.m_ESPAltherma_Flow_sensor_l_min
-                    * 1.16
-                    * 60
-                    * (
+            if not doCalculate_Heating:
+                self.m_ESPAltherma_INV_Heat_Energy = 0.0
+                self.m_ESPAltherma_INV_Heat_COP = 0.0
+                self.m_ESPAltherma_INV_electric_HeatEnergy = 0.0
+
+            if "DHW" in self.m_ESPAltherma_I_U_operation_mode:
+                if self.m_ESPAltherma_INV_primary_current == 0:
+                    delta_T = (
+                        self.m_ESPAltherma_HPSU_Mixed_leaving_water_R7T_DLWA2
+                        - self.m_ESPAltherma_Inlet_water_temp_R4T
+                    )
+                else:
+                    delta_T = (
                         self.m_ESPAltherma_Leaving_water_temp_BUH_R2T
                         - self.m_ESPAltherma_Inlet_water_temp_R4T
                     )
+                self.m_ESPAltherma_INV_DHW_Energy = (
+                    self.m_ESPAltherma_Flow_sensor_l_min_average.get_avg()
+                    * 1.16
+                    * 60
+                    * delta_T
                 )
                 self.m_ESPAltherma_INV_electric_DHWEnergy = (
-                    self.m_ESPAltherma_INV_primary_current * 400
+                    1.732
+                    * self.m_ESPAltherma_INV_primary_current_average.get_avg()
+                    * self.m_SDM630_WR.get_total_power_factor()
+                    * self.m_SDM630_WR.get_voltage_ll()
                 )
-                if self.m_ESPAltherma_INV_electric_DHWEnergy != 0:
+
+                if self._SDM630_WP_total_power_active_average.get_avg() != 0:
                     self.m_ESPAltherma_INV_DHW_COP = (
                         self.m_ESPAltherma_INV_DHW_Energy
-                        / self.m_ESPAltherma_INV_electric_DHWEnergy
+                        / self._SDM630_WP_total_power_active_average.get_avg()
                     )
-                else:
-                    self.m_ESPAltherma_INV_DHW_COP = 0.0
+                    doCalculate_DWH = True
+
+
+            if not doCalculate_DWH:
+                self.m_ESPAltherma_INV_DHW_COP = 0.0
+                self.m_ESPAltherma_INV_electric_DHWEnergy = 0.0
 
         if self.m_DaikinWP != None and self.m_DevicedoProcessing["DaikinWP"]:
             self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
@@ -461,9 +523,8 @@ class ProcessBase(object):
                 self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
             )
 
-        if self.m_kebaWallbox != None:
-            if not self.m_DevicedoProcessing["kebaWallbox"]:
-                return
+        if self.m_kebaWallbox != None and self.m_DevicedoProcessing["kebaWallbox"]:
+
 
             pass
 
@@ -635,6 +696,24 @@ class ProcessBase(object):
                     self.m_SPH_TL3_BH_UP.set_OnOff(InverterStateONOff.ON.value)
                     logger.info(f"doProcess_InverterState: set_OnOff(0)")
 
+
+
+    
+    def is_waterprocessingactive(self) -> bool:
+
+        if self.m_USE_ALTHERMA_API > 0:
+            if "Heating" in self.m_ESPAltherma_operation_Mode:
+                return True     
+            
+            if "DWH" in self.m_ESPAltherma_operation_Mode:
+                return True   
+      
+        elif self.m_USE_DAIKIN_API > 0:
+            if self._DaikinWP_WATER_turn_on :
+                return True
+          
+        return False
+                  
     def is_start_Water(self) -> bool:
         start_WaterOn: bool = True
         if self._DaikinWP_WATER_Cancel_from_WP:
@@ -643,8 +722,14 @@ class ProcessBase(object):
         if self._SDM630_WP_WATER_consume_energy >= self.m_PV_MAX_WATER_CONSUME_ENERGY:
             return False
 
-        if self.m_USE_DAIKIN_API > 0:
-            if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
+        if self.m_USE_ALTHERMA_API > 0:
+            if self.m_ESPAltherma_DHW_tank_temp_R5T >= self.m_MIN_WATER_TEMPERATURE:
+                return False
+
+        elif self.m_USE_DAIKIN_API > 0:
+            # if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
+            #     return False
+            if self._DaikinWP_WATER_temperature >= self.m_MIN_WATER_TEMPERATURE:
                 return False
 
         return start_WaterOn
@@ -657,7 +742,12 @@ class ProcessBase(object):
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=1, state_grid_2=1)
 
         else:
-            if self.m_USE_DAIKIN_API > 0:
+            if self.m_USE_ALTHERMA_API > 0:
+                self._DaikinWP_WATER_target_temperature_Saved = (
+                    self.m_ESPAltherma_DHW_tank_temp_R5T
+                )
+
+            elif self.m_USE_DAIKIN_API > 0:
                 self._DaikinWP_WATER_target_temperature_Saved = (
                     self._DaikinWP_WATER_target_temperature
                 )
@@ -709,11 +799,19 @@ class ProcessBase(object):
         )
         doCancel = False
 
-        if self.m_USE_DAIKIN_API > 0:
-            if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
+        if self.m_USE_ALTHERMA_API > 0:
+            if self.m_ESPAltherma_DHW_tank_temp_R5T >= self.m_MAX_WATER_TEMPERATURE:
+                doCancel = False
+                logger.info(
+                    f"doProcess_ControlDaikinWater: Water-Temp. {self.m_ESPAltherma_DHW_tank_temp_R5T} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel"
+                )
+                self._DaikinWP_WATER_Cancel_from_WP = True
+
+        elif self.m_USE_DAIKIN_API > 0:
+            if self._DaikinWP_WATER_temperature >= self.m_MAX_WATER_TEMPERATURE:
                 doCancel = True
                 logger.info(
-                    f"doProcess_ControlDaikinWater: Water-Temp. {self._DaikinWP_WATER_temperature} >= Water-Target-Temp. {self.m_DaikinWP.get_WATER_max_temp()} -> Cancel"
+                    f"doProcess_ControlDaikinWater: Water-Temp. {self._DaikinWP_WATER_temperature} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel"
                 )
                 self._DaikinWP_WATER_Cancel_from_WP = True
 
@@ -773,7 +871,8 @@ class ProcessBase(object):
     def doProcess_ControlDaikinWater(self, timestamp):
         # self.m_TimeSpan_Daikin_Control_Water
         if self.m_doProcessDaikinControlWater > 0:
-            if self._DaikinWP_WATER_turn_on or self.m_USE_DAIKIN_API > 0:
+            if self.is_waterprocessingactive():
+            # if self._DaikinWP_WATER_turn_on or self.m_USE_DAIKIN_API > 0:
                 if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
                     # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
                     #
@@ -865,7 +964,7 @@ class ProcessBase(object):
             # self._SPH_TL3_BH_UP_Pactogrid_total
             # self._SPH_TL3_BH_UP_PLocalLoad_total
             doProcessDaikin: bool = (
-                (self.m_DevicedoProcessing["DaikinWP"] or self.m_USE_DAIKIN_API > 0)
+                (self.m_DevicedoProcessing["DaikinWP"] and self.m_USE_DAIKIN_API > 0) or (self.m_DevicedoProcessing["ESPAltherma"] and self.m_USE_ALTHERMA_API > 0)
                 and self.m_DevicedoProcessing["SPH_TL3_BH_UP"]
                 and self.m_DevicedoProcessing["SDM630_WP"]
                 and self.m_DevicedoProcessing["SDM630_WR"]
@@ -948,6 +1047,10 @@ class ProcessBase(object):
         self._SDM630_WP_total_power_active_average.reset()
         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
+    def doinitialstateEPSAltherma(self):
+        self.m_ESPAltherma_INV_primary_current_average.reset()
+        self.m_ESPAltherma_Flow_sensor_l_min_average.reset()
+
     def doProcess(self):
         timestamp = datetime.now(timezone.utc).astimezone()
         difference_act = self.m_TimeSpan.getTimeSpantoActTime()
@@ -964,6 +1067,7 @@ class ProcessBase(object):
         if self.m_lastday != actualday:
             self.getsunrise_sunsetTime()
             self.doinitialstateDaikinWater()
+            self.doinitialstateEPSAltherma()
 
             self.m_lastday = actualday
             # self.m_TimeSpan_Sunrise.setActTime(timestamp)
@@ -1035,6 +1139,37 @@ class ProcessBase(object):
                     if self._DaikinWP_Sensor_LeavingWaterTemperatur == None
                     else self._DaikinWP_Sensor_LeavingWaterTemperatur
                 ),
+                "ESPAltherma_INV_Heat_Energy": (
+                    0
+                    if self.m_ESPAltherma_INV_Heat_Energy == None
+                    else self.m_ESPAltherma_INV_Heat_Energy
+                ),
+                "ESPAltherma_INV_Heat_COP": (
+                    0
+                    if self.m_ESPAltherma_INV_Heat_COP == None
+                    else self.m_ESPAltherma_INV_Heat_COP
+                ),
+                "ESPAltherma_INV_electric_HeatEnergy": (
+                    0
+                    if self.m_ESPAltherma_INV_electric_HeatEnergy == None
+                    else self.m_ESPAltherma_INV_electric_HeatEnergy
+                ),
+                "ESPAltherma_INV_DHW_COP": (
+                    0
+                    if self.m_ESPAltherma_INV_DHW_COP == None
+                    else self.m_ESPAltherma_INV_DHW_COP
+                ),
+                "ESPAltherma_INV_electric_DHWEnergy": (
+                    0
+                    if self.m_ESPAltherma_INV_electric_DHWEnergy == None
+                    else self.m_ESPAltherma_INV_electric_DHWEnergy
+                ),
+                "SDM630_WP_total_power_active_average": (
+                    0
+                    if self._SDM630_WP_total_power_active_average.get_avg() == None
+                    else self._SDM630_WP_total_power_active_average.get_avg()
+                ),
+                
                 "sunrise": (
                     ""
                     if self.m_today_sr == None
