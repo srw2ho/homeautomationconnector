@@ -978,17 +978,8 @@ class ProcessBase(object):
 
     def doProcess_ControlDaikinClimate(self, timestamp):
         if self.m_doProcessDaikinControlClimate > 0:
-            if self._DaikinWP_CLIMATE_turn_on:
-                if self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.OFF:
-                    pass
-                    # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
-                    #
+            pass
 
-                    # self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.ON
-
-                elif self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.ON:
-                    # self._DaikinWP_CLIMATE_turn_onState == SwitchONOff.OFF
-                    pass
 
     def doProcess_ControlDaikinWP(self, timestamp):
         if self.m_SPH_TL3_BH_UP != None:
