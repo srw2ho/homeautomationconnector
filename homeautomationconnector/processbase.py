@@ -906,10 +906,12 @@ class ProcessBase(object):
         return doCancel
 
     def doProcess_ControlDaikinWater(self, timestamp):
+        is_ProcessingActiv:bool = False
         # self.m_TimeSpan_Daikin_Control_Water
         if self.m_doProcessDaikinControlWater > 0:
             if self.is_waterprocessingactive():
                 # if self._DaikinWP_WATER_turn_on or self.m_USE_DAIKIN_API > 0:
+                is_ProcessingActiv = True
                 if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
                     # PV Überschuss, Tank-Temperatur kleiner Max Temperatur
                     #
@@ -978,7 +980,8 @@ class ProcessBase(object):
                     if doCancel:
                         self.cancel_WaterHeating()
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
-        else:
+        
+        if not is_ProcessingActiv:
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             self.m_GPIODevice.set_enableHeating(False)
