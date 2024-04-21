@@ -484,8 +484,8 @@ class ProcessBase(object):
                         # 1.732
                         1.0
                         * self.m_ESPAltherma_INV_primary_current_average.get_avg()
-                        * self.m_SDM630_WR.get_total_power_factor()
-                        * self.m_SDM630_WR.get_voltage_ll()
+                        * self.m_SDM630_WP.get_total_power_factor()
+                        * self.m_SDM630_WP.get_voltage_ll()
                     )
 
                     if self.m_ESPAltherma_INV_primary_current != 0:
@@ -519,8 +519,8 @@ class ProcessBase(object):
                         # 1.732
                         1.0
                         * self.m_ESPAltherma_INV_primary_current_average.get_avg()
-                        * self.m_SDM630_WR.get_total_power_factor()
-                        * self.m_SDM630_WR.get_voltage_ll()
+                        * self.m_SDM630_WP.get_total_power_factor()
+                        * self.m_SDM630_WP.get_voltage_ll()
                     )
 
                     if self._SDM630_WP_total_power_active_average.get_avg() != 0:
