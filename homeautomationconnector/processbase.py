@@ -481,8 +481,8 @@ class ProcessBase(object):
                     )
 
                     self.m_ESPAltherma_INV_electric_HeatEnergy = float(
-                        # 1.732
-                        1.0
+                        1.73
+                        # 1.0
                         * self.m_ESPAltherma_INV_primary_current_average.get_avg()
                         * self.m_SDM630_WP.get_total_power_factor()
                         * self.m_SDM630_WP.get_voltage_ll()
@@ -516,8 +516,8 @@ class ProcessBase(object):
                         * delta_T
                     )
                     self.m_ESPAltherma_INV_electric_DHWEnergy = float(
-                        # 1.732
-                        1.0
+                        1.73
+                        # 1.0
                         * self.m_ESPAltherma_INV_primary_current_average.get_avg()
                         * self.m_SDM630_WP.get_total_power_factor()
                         * self.m_SDM630_WP.get_voltage_ll()
