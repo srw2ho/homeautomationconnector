@@ -262,9 +262,14 @@ class ProcessBase(object):
         try:
             sun = Sun(self.m_LOCAL_LATIDUDE, self.m_LOCAL_LONGITUDE)
 
+
             # Get today's sunrise and sunset in UTC
             self.m_today_sr = sun.get_sunrise_time().astimezone()
             self.m_today_ss = sun.get_sunset_time().astimezone()
+            
+            if self.m_today_sr > self.m_today_ss:
+                self.m_today_ss = self.m_today_ss + timedelta(days=1)
+        
             # self.m_today_sr = sun.get_sunrise_time()
             # self.m_today_ss = sun.get_sunset_time()
             logger.info(
@@ -742,6 +747,9 @@ class ProcessBase(object):
             if "DWH" in self.m_ESPAltherma_operation_mode:
                 return True
 
+            if "Fan Only" in self.m_ESPAltherma_operation_mode:
+                return True
+            
         elif self.m_USE_DAIKIN_API > 0:
             if self._DaikinWP_WATER_turn_on:
                 return True
