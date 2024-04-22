@@ -267,6 +267,7 @@ class ProcessBase(object):
             self.m_today_sr = sun.get_sunrise_time().astimezone()
             self.m_today_ss = sun.get_sunset_time().astimezone()
             
+            # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
                 self.m_today_ss = self.m_today_ss + timedelta(days=1)
         
