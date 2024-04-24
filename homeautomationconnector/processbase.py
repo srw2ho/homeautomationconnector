@@ -86,7 +86,7 @@ class ProcessBase(object):
         self._DaikinWP_WATER_target_temperature_Saved = 0
         self._SDM630_WP_start_import_energy_active = 0.0
         self._availablepowerWR = 0.0
-        self._SDM630_WP_WATER_consume_energy = 0.0
+        self.WP_WATER_consume_energy = 0.0
         self._DaikinWP_WATER_Cancel_from_WP = False
         # Daikin Default-Values
         self._DaikinWP_CLIMATE_hvac_mode = ""
@@ -262,15 +262,14 @@ class ProcessBase(object):
         try:
             sun = Sun(self.m_LOCAL_LATIDUDE, self.m_LOCAL_LONGITUDE)
 
-
             # Get today's sunrise and sunset in UTC
             self.m_today_sr = sun.get_sunrise_time().astimezone()
             self.m_today_ss = sun.get_sunset_time().astimezone()
-            
+
             # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
                 self.m_today_ss = self.m_today_ss + timedelta(days=1)
-        
+
             # self.m_today_sr = sun.get_sunrise_time()
             # self.m_today_ss = sun.get_sunset_time()
             logger.info(
@@ -495,7 +494,7 @@ class ProcessBase(object):
                     )
 
                     if self.m_ESPAltherma_INV_primary_current != 0:
-                    # if self._SDM630_WP_total_power_active_average.get_avg() != 0:
+                        # if self._SDM630_WP_total_power_active_average.get_avg() != 0:
                         self.m_ESPAltherma_INV_Heat_COP = float(
                             self.m_ESPAltherma_INV_Heat_Energy
                             / self._SDM630_WP_total_power_active_average.get_avg()
@@ -750,7 +749,7 @@ class ProcessBase(object):
 
             if "Fan Only" in self.m_ESPAltherma_operation_mode:
                 return True
-            
+
         elif self.m_USE_DAIKIN_API > 0:
             if self._DaikinWP_WATER_turn_on:
                 return True
@@ -763,7 +762,7 @@ class ProcessBase(object):
             return False
 
         if (
-            self._SDM630_WP_WATER_consume_energy + self.m_PV_MIN_WATER_CONSUME_ENERGY
+            self.WP_WATER_consume_energy + self.m_PV_MIN_WATER_CONSUME_ENERGY
             >= self.m_PV_MAX_WATER_CONSUME_ENERGY
         ):
             return False
@@ -812,7 +811,7 @@ class ProcessBase(object):
     def cancel_WaterHeating(self):
 
         logger.info(
-            f"doProcess_ControlDaikinWater: consumed Energy:{self._SDM630_WP_WATER_consume_energy}"
+            f"doProcess_ControlDaikinWater: consumed Energy:{self.WP_WATER_consume_energy}"
         )
         if self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
@@ -884,11 +883,11 @@ class ProcessBase(object):
             if doCancel:
                 return True
 
-        if self._SDM630_WP_WATER_consume_energy >= self.m_PV_MAX_WATER_CONSUME_ENERGY:
+        if self.WP_WATER_consume_energy >= self.m_PV_MAX_WATER_CONSUME_ENERGY:
             doCancel = True
             self._DaikinWP_WATER_Cancel_from_WP = True
             logger.info(
-                f"doProcess_ControlDaikinWater: WP already consumed Energy: {self._SDM630_WP_WATER_consume_energy} > MAX. Consume Energy: {self.m_PV_MAX_WATER_CONSUME_ENERGY} -> Cancel"
+                f"doProcess_ControlDaikinWater: WP already consumed Energy: {self.WP_WATER_consume_energy} > MAX. Consume Energy: {self.m_PV_MAX_WATER_CONSUME_ENERGY} -> Cancel"
             )
 
         if difference_secs >= self.m_PV_Surplus_Time_On_secs:
@@ -904,7 +903,7 @@ class ProcessBase(object):
                 if self._availablepowerWR < 100:
 
                     if (
-                        self._SDM630_WP_WATER_consume_energy
+                        self.WP_WATER_consume_energy
                         >= self.m_PV_MIN_WATER_CONSUME_ENERGY
                     ):
                         doCancel = True
@@ -915,7 +914,7 @@ class ProcessBase(object):
         return doCancel
 
     def doProcess_ControlDaikinWater(self, timestamp):
-        is_ProcessingActiv:bool = False
+        is_ProcessingActiv: bool = False
         # self.m_TimeSpan_Daikin_Control_Water
         if self.m_doProcessDaikinControlWater > 0:
             if self.is_waterprocessingactive():
@@ -956,7 +955,7 @@ class ProcessBase(object):
                                 # self._SDM630_WP_start_import_energy_active = self._SDM630_WP_import_energy_active
 
                                 self._SDM630_WP_start_import_energy_active = (
-                                    self._SDM630_WP_WATER_consume_energy
+                                    self.WP_WATER_consume_energy
                                     + self._SDM630_WP_import_energy_active
                                 )
 
@@ -973,7 +972,7 @@ class ProcessBase(object):
 
                 elif self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
 
-                    self._SDM630_WP_WATER_consume_energy = (
+                    self.WP_WATER_consume_energy = (
                         self._SDM630_WP_import_energy_active
                         - self._SDM630_WP_start_import_energy_active
                     )
@@ -989,7 +988,7 @@ class ProcessBase(object):
                     if doCancel:
                         self.cancel_WaterHeating()
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
-        
+
         if not is_ProcessingActiv:
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
@@ -1080,7 +1079,7 @@ class ProcessBase(object):
 
     def doinitialstateDaikinWater(self):
         self._SDM630_WP_start_import_energy_active = 0.0
-        self._SDM630_WP_WATER_consume_energy = 0.0
+        self.WP_WATER_consume_energy = 0.0
         self._DaikinWP_WATER_Cancel_from_WP = False
         # self._SPH_TL3_BH_UP_Pactogrid_total_average.reset()
         # self._SPH_TL3_BH_UP_Pdischarge1_average.reset()
@@ -1103,9 +1102,11 @@ class ProcessBase(object):
 
         # all 5 hourse get sunrise/sunset time
         if self.m_lastday != actualday:
-            self.getsunrise_sunsetTime()
-            self.doinitialstateDaikinWater()
-            self.m_lastday = actualday
+            #  1 hour after midnight-> time shift between raspi and server
+            if timestamp.hour >= 1 and timestamp.hour <= 2:
+                self.getsunrise_sunsetTime()
+                self.doinitialstateDaikinWater()
+                self.m_lastday = actualday
             # self.m_TimeSpan_Sunrise.setActTime(timestamp)
 
         #  val = 0 if ret == None else ret  # Requires Python version >= 2.5
@@ -1150,6 +1151,7 @@ class ProcessBase(object):
                 "ESPAltherma_Water_pressure": self.m_ESPAltherma_Water_pressure,
                 "ESPAltherma_Flow_sensor_l_min_average": self.m_ESPAltherma_Flow_sensor_l_min_average.get_avg(),
                 "ESPAltherma_INV_primary_current_average": self.m_ESPAltherma_INV_primary_current_average.get_avg(),
+                "WP_WATER_consume_energy":self.WP_WATER_consume_energy,
                 "sunrise": (
                     ""
                     if self.m_today_sr == None
