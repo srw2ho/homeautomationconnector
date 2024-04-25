@@ -731,12 +731,12 @@ class ProcessBase(object):
                 else:
                     if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
                         self.m_SPH_TL3_BH_UP.set_OnOff(InverterStateONOff.ON.value)
-                        logger.info(f"doProcess_InverterState: set_OnOff(0)")
+                        logger.info(f"doProcess_InverterState: set_OnOff(1)")
 
             else:
                 if self._SPH_TL3_BH_UP_OnOff == InverterStateONOff.OFF.value:
                     self.m_SPH_TL3_BH_UP.set_OnOff(InverterStateONOff.ON.value)
-                    logger.info(f"doProcess_InverterState: set_OnOff(0)")
+                    logger.info(f"doProcess_InverterState: set_OnOff(1)")
 
     def is_waterprocessingactive(self) -> bool:
 
