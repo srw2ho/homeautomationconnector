@@ -1,29 +1,19 @@
 .history/*
 OPC-UA.log
-homeautomationconnector/__pycache__/*
+**/__pycache__/*
 homeautomationconnector/growattdevice/__pycache__/*
 homeautomationconnector/sdmdevice/__pycache__/*
 **/.pytest_cache/*
 .vscode/*
-homeautomationconnector/.history/**
+**/.history/**
 config.ini
 build/**
-homeautomationconnector.egg-info/**
+**.egg-info/**
 dist/*.whl
 __pycache__/**
 dist/**
-homeautomationconnector-env/**
+**-env/**
 logs/**
 
 
 
-homeautomationconnector/gpiodevice/__pycache__/gpiodevice.cpython-39.pyc
-homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
-homeautomationconnector/kebawallboxdevice/__pycache__/keykontactP30.cpython-39.pyc
-
-
-homeautomationconnector/helpers/__pycache__/timespan.cpython-39.pyc
-homeautomationconnector/gpiodevicehome/__pycache__/gpiodevice.cpython-39.pyc
-homeautomationconnector/gpiodevicehome/__pycache__/gpiodevicehome.cpython-39.pyc
-homeautomationconnector/daikindevice/__pycache__/daikin.cpython-39.pyc
-homeautomationconnector/espaltherma/__pycache__/espalthermadevice.cpython-39.pyc
