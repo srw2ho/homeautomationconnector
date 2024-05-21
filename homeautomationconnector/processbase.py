@@ -741,14 +741,28 @@ class ProcessBase(object):
     def is_waterprocessingactive(self) -> bool:
 
         if self.m_USE_ALTHERMA_API > 0:
-            if "Heating" in self.m_ESPAltherma_operation_mode:
+            # I_U_operation_mode
+                # DWH
+                # Heating
+                # Stop
+            
+            if "DWH" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
+    
+            if "Heating" in self.m_ESPAltherma_I_U_operation_mode:
+                return True
+           
+            if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
+                return False
+                    
+            # if "Heating" in self.m_ESPAltherma_operation_mode:
+            #     return True
 
-            if "DWH" in self.m_ESPAltherma_operation_mode:
-                return True
+            # if "DWH" in self.m_ESPAltherma_operation_mode:
+            #     return True
 
-            if "Fan Only" in self.m_ESPAltherma_operation_mode:
-                return True
+            # if "Fan Only" in self.m_ESPAltherma_operation_mode:
+            #     return True
 
         elif self.m_USE_DAIKIN_API > 0:
             if self._DaikinWP_WATER_turn_on:
