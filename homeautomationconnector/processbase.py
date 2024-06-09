@@ -1016,9 +1016,9 @@ class ProcessBase(object):
     def doProcess_ControlDaikinWP(self, timestamp):
 
         doProcessDaikin: bool = (
-            (self.m_DevicedoProcessing["DaikinWP"] and self.m_USE_DAIKIN_API > 0)
+            (self.m_USE_DAIKIN_API > 0 and self.m_DevicedoProcessing["DaikinWP"] )
             or (
-                self.m_DevicedoProcessing["ESPAltherma"] and self.m_USE_ALTHERMA_API > 0
+                self.m_USE_ALTHERMA_API > 0 and self.m_DevicedoProcessing["ESPAltherma"] 
             )
             and self.m_DevicedoProcessing["SPH_TL3_BH_UP"]
             and self.m_DevicedoProcessing["SDM630_WP"]
