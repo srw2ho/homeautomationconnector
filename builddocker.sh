@@ -10,8 +10,8 @@ Build=$(<dockerversion.txt)
 
 
 # PYTHON_INSTALLVERSION=3.11-bookworm # for RASPI 5
-PYTHON_INSTALLVERSION=3.9-slim-buster # for RASPI 5
-# PYTHON_INSTALLVERSION=3.9-slim-bookworm # for RASPI 4
+# PYTHON_INSTALLVERSION=3.9-slim-buster # for RASPI 4
+PYTHON_INSTALLVERSION=3.9-slim-bookworm # for RASPI 4 + for RASPI 5
 # PYTHON_INSTALLVERSION=3.9-bookworm # for RASPI 4
 # PYTHON_INSTALLVERSION=3.9-slim-buster # for RASPI 4 funktioniert nicht mit lgpio
 
