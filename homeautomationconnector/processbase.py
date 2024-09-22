@@ -742,18 +742,20 @@ class ProcessBase(object):
 
         if self.m_USE_ALTHERMA_API > 0:
             # I_U_operation_mode
-                # DWH
+                # DHW
                 # Heating
                 # Stop
             
-            if "DWH" in self.m_ESPAltherma_I_U_operation_mode:
+            if "DHW" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
     
             if "Heating" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
            
             if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
-                return False
+                if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
+                    return False
+                else: return True
                     
             # if "Heating" in self.m_ESPAltherma_operation_mode:
             #     return True
