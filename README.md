@@ -26,6 +26,7 @@ python -m homeautomationconnector
 
 # Build Docker
     docker build  . -t homeautomationconnector
+    ./builddocker.sh
     
 # Run Docker
         docker run  --privileged --rm -i -t homeautomationconnector:0.0.0 /bin/sh
