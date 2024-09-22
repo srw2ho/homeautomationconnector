@@ -753,9 +753,9 @@ class ProcessBase(object):
                 return True
            
             if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
-                if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
-                    return False
-                else: return True
+                # if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
+                return False
+                # else: return True
                     
             # if "Heating" in self.m_ESPAltherma_operation_mode:
             #     return True
