@@ -49,6 +49,17 @@ class InverterStateONOff(Enum):
     def __getstate__(self):
         return self.value
 
+class InverterState(Enum):
+    WORKING_STATE = 0
+    Normal = 5
+    Normal_NoPV = 6
+    Standby = 0
+    Selftest = 1
+
+
+    def __getstate__(self):
+        return self.value
+
 
 class ProcessBase(object):
     def __init__(
@@ -269,6 +280,10 @@ class ProcessBase(object):
             # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
                 self.m_today_ss = self.m_today_ss + timedelta(days=1)
+
+            # only for tesiting
+            # self.m_today_ss = self.m_today_ss - timedelta(days=1)
+            # self.m_today_sr = self.m_today_sr - timedelta(days=1)
 
             # self.m_today_sr = sun.get_sunrise_time()
             # self.m_today_ss = sun.get_sunset_time()
@@ -592,7 +607,7 @@ class ProcessBase(object):
                 self.doUnProcess_SPH_TL3_BH_UP()
 
             else:
-                if self._SPH_TL3_BH_UP_Inverter_Status >= 0:
+                if self._SPH_TL3_BH_UP_Inverter_Status >= InverterState.WORKING_STATE.value:
                     self.doProcess_InverterTemperature()
 
                     self.doProcess_InverterState()
@@ -666,8 +681,7 @@ class ProcessBase(object):
                     # check for inverter zwischen sonnen-aufgang und sonnen-untergang
                     # inverter immer einschalten
 
-                    # if timestamp > timestamp_sr - timedelta(hours=1):
-                    #     pass
+
                     InverterTimeOn = False
                     if timestamp_sr < timestamp_ss:
                         InverterTimeOn = timestamp_sr <= timestamp <= timestamp_ss
@@ -1116,10 +1130,10 @@ class ProcessBase(object):
 
         actualday = timestamp.day
 
-        # all 5 hourse get sunrise/sunset time
+        # all new day get sunrise/sunset time
         if self.m_lastday != actualday:
-            #  1 hour after midnight-> time shift between raspi and server
-            if timestamp.hour >= 1 and timestamp.hour <= 2:
+            #  4 hour after midnight-> time shift between raspi and server
+            if timestamp.hour >= 3 and timestamp.hour <= 4:
                 self.getsunrise_sunsetTime()
                 self.doinitialstateDaikinWater()
                 self.m_lastday = actualday
