@@ -49,13 +49,13 @@ class InverterStateONOff(Enum):
     def __getstate__(self):
         return self.value
 
+
 class InverterState(Enum):
     WORKING_STATE = 0
     Normal = 5
     Normal_NoPV = 6
     Standby = 0
     Selftest = 1
-
 
     def __getstate__(self):
         return self.value
@@ -78,7 +78,7 @@ class ProcessBase(object):
         self.m_SDM630_WB: SDM630Device = None
         self.m_SPH_TL3_BH_UP: GrowattDevice = None
         self.m_kebaWallbox: KeykontactP30 = None
-        self.m_DaikinWP: DaikinDevice = None
+        # self.m_DaikinWP: DaikinDevice = None
         self.m_ESPAltherma: ESPAltherma = None
         self.m_tomlParser = tomlParser
 
@@ -100,26 +100,26 @@ class ProcessBase(object):
         self.WP_WATER_consume_energy = 0.0
         self._DaikinWP_WATER_Cancel_from_WP = False
         # Daikin Default-Values
-        self._DaikinWP_CLIMATE_hvac_mode = ""
-        self._DaikinWP_WATER_temperature = 0
-        self._DaikinWP_WATER_turn_on = False
-        self._DaikinWP_CLIMATE_turn_on = False
-        self._DaikinWP_WATER_tank_state = ""
+        # self._DaikinWP_CLIMATE_hvac_mode = ""
+        # self._DaikinWP_WATER_temperature = 0
+        # self._DaikinWP_WATER_turn_on = False
+        # self._DaikinWP_CLIMATE_turn_on = False
+        # self._DaikinWP_WATER_tank_state = ""
 
         self._SPH_TL3_BH_UP_OnOff = 1
         self._SPH_TL3_BH_UP_Inverter_Status = 0
-        self._DaikinWP_WATER_tank_state = ""
-        self._DaikinWP_WATER_temperature = 0.0
-        self._DaikinWP_CLIMATE_temperature = 0
-        self._DaikinWP_Sensor_OutsideTemperature = 0
-        self._DaikinWP_Sensor_LeavingWaterTemperatur = 0
+        # self._DaikinWP_WATER_tank_state = ""
+        # self._DaikinWP_WATER_temperature = 0.0
+        # self._DaikinWP_CLIMATE_temperature = 0
+        # self._DaikinWP_Sensor_OutsideTemperature = 0
+        # self._DaikinWP_Sensor_LeavingWaterTemperatur = 0
 
-        self._DaikinWP_WATER_target_temperature = 45
-        self._DaikinWP_CLIMATE_target_temperature = 0
-        self._DaikinWP_CLIMATE_temperature = 0
+        # self._DaikinWP_WATER_target_temperature = 45
+        # self._DaikinWP_CLIMATE_target_temperature = 0
+        # self._DaikinWP_CLIMATE_temperature = 0
 
-        self._DaikinWP_Sensor_OutsideTemperature = 0
-        self._DaikinWP_Sensor_LeavingWaterTemperatur = 0
+        # self._DaikinWP_Sensor_OutsideTemperature = 0
+        # self._DaikinWP_Sensor_LeavingWaterTemperatur = 0
 
         # Daikin Default-Values
 
@@ -261,7 +261,7 @@ class ProcessBase(object):
             "daikin.MAX_WATER_TEMPERATURE", 65.0
         )
 
-        self.m_USE_DAIKIN_API = self.m_tomlParser.get("daikin.USE_DAIKIN_API", 0)
+        # self.m_USE_DAIKIN_API = self.m_tomlParser.get("daikin.USE_DAIKIN_API", 0)
         self.m_USE_ALTHERMA_API = self.m_tomlParser.get("daikin.USE_ALTHERMA_API", 1)
 
         for key in self.m_useddevices.keys():
@@ -271,6 +271,8 @@ class ProcessBase(object):
 
     def getsunrise_sunsetTime(self):
         try:
+            get_timestamp = datetime.now(timezone.utc).astimezone()
+
             sun = Sun(self.m_LOCAL_LATIDUDE, self.m_LOCAL_LONGITUDE)
 
             # Get today's sunrise and sunset in UTC
@@ -279,6 +281,23 @@ class ProcessBase(object):
 
             # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
+                logger.info(
+                    f"getsunrise_sunsetTime: sunrise time: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} greater than sunset time:{self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')}"
+                )
+                self.m_today_ss = self.m_today_ss + timedelta(days=1)
+             
+
+            if get_timestamp.day > self.m_today_sr.day:
+                logger.info(
+                    f"getsunrise_sunsetTime: sunrise time: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} not in getting time interval:{get_timestamp.strftime('%m/%d/%Y, %H:%M:%S')}"
+                )
+                self.m_today_sr = self.m_today_sr + timedelta(days=1)
+               
+
+            if get_timestamp.day > self.m_today_ss.day:
+                logger.info(
+                    f"getsunrise_sunsetTime: sunrise time: {self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')} not in getting time interval:{get_timestamp.strftime('%m/%d/%Y, %H:%M:%S')}"
+                )
                 self.m_today_ss = self.m_today_ss + timedelta(days=1)
 
             # only for tesiting
@@ -288,7 +307,7 @@ class ProcessBase(object):
             # self.m_today_sr = sun.get_sunrise_time()
             # self.m_today_ss = sun.get_sunset_time()
             logger.info(
-                f"getsunrise_sunsetTime: sunrise: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} sunset:{self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')}"
+                f"getsunrise_sunsetTime: sunrise time: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} sunset time:{self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')}"
             )
         except SunTimeException as e:
             self.m_today_sr = None
@@ -557,29 +576,29 @@ class ProcessBase(object):
                 self.m_ESPAltherma_INV_DHW_COP = float(0.0)
                 self.m_ESPAltherma_INV_electric_DHWEnergy = float(0.0)
 
-        if self.m_DaikinWP != None and self.m_DevicedoProcessing["DaikinWP"]:
-            self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
-            self._DaikinWP_WATER_temperature = self.m_DaikinWP.get_WATER_temperature()
-            self._DaikinWP_WATER_turn_on = self.m_DaikinWP.get_WATER_turn_on()
-            self._DaikinWP_CLIMATE_turn_on = self.m_DaikinWP.get_CLIMATE_turn_on()
-            self._DaikinWP_WATER_tank_state = self.m_DaikinWP.get_WATER_tank_state()
+        # if self.m_DaikinWP != None and self.m_DevicedoProcessing["DaikinWP"]:
+        #     self._DaikinWP_CLIMATE_hvac_mode = self.m_DaikinWP.get_CLIMATE_hvac_mode()
+        #     self._DaikinWP_WATER_temperature = self.m_DaikinWP.get_WATER_temperature()
+        #     self._DaikinWP_WATER_turn_on = self.m_DaikinWP.get_WATER_turn_on()
+        #     self._DaikinWP_CLIMATE_turn_on = self.m_DaikinWP.get_CLIMATE_turn_on()
+        #     self._DaikinWP_WATER_tank_state = self.m_DaikinWP.get_WATER_tank_state()
 
-            self._DaikinWP_WATER_target_temperature = (
-                self.m_DaikinWP.get_WATER_target_temperature()
-            )
-            self._DaikinWP_CLIMATE_target_temperature = (
-                self.m_DaikinWP.get_CLIMATE_target_temperature()
-            )
-            self._DaikinWP_CLIMATE_temperature = (
-                self.m_DaikinWP.get_CLIMATE_temperature()
-            )
+        #     self._DaikinWP_WATER_target_temperature = (
+        #         self.m_DaikinWP.get_WATER_target_temperature()
+        #     )
+        #     self._DaikinWP_CLIMATE_target_temperature = (
+        #         self.m_DaikinWP.get_CLIMATE_target_temperature()
+        #     )
+        #     self._DaikinWP_CLIMATE_temperature = (
+        #         self.m_DaikinWP.get_CLIMATE_temperature()
+        #     )
 
-            self._DaikinWP_Sensor_OutsideTemperature = (
-                self.m_DaikinWP.get_Sensor_OutsideTemperature()
-            )
-            self._DaikinWP_Sensor_LeavingWaterTemperatur = (
-                self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
-            )
+        #     self._DaikinWP_Sensor_OutsideTemperature = (
+        #         self.m_DaikinWP.get_Sensor_OutsideTemperature()
+        #     )
+        #     self._DaikinWP_Sensor_LeavingWaterTemperatur = (
+        #         self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
+        #     )
 
         if self.m_kebaWallbox != None and self.m_DevicedoProcessing["kebaWallbox"]:
 
@@ -607,7 +626,10 @@ class ProcessBase(object):
                 self.doUnProcess_SPH_TL3_BH_UP()
 
             else:
-                if self._SPH_TL3_BH_UP_Inverter_Status >= InverterState.WORKING_STATE.value:
+                if (
+                    self._SPH_TL3_BH_UP_Inverter_Status
+                    >= InverterState.WORKING_STATE.value
+                ):
                     self.doProcess_InverterTemperature()
 
                     self.doProcess_InverterState()
@@ -680,7 +702,6 @@ class ProcessBase(object):
                     timestamp_sr = self.m_today_sr
                     # check for inverter zwischen sonnen-aufgang und sonnen-untergang
                     # inverter immer einschalten
-
 
                     InverterTimeOn = False
                     if timestamp_sr < timestamp_ss:
@@ -756,21 +777,21 @@ class ProcessBase(object):
 
         if self.m_USE_ALTHERMA_API > 0:
             # I_U_operation_mode
-                # DHW
-                # Heating
-                # Stop
-            
+            # DHW
+            # Heating
+            # Stop
+
             if "DHW" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
-    
+
             if "Heating" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
-           
+
             if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
                 # if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
                 return False
                 # else: return True
-                    
+
             # if "Heating" in self.m_ESPAltherma_operation_mode:
             #     return True
 
@@ -780,9 +801,9 @@ class ProcessBase(object):
             # if "Fan Only" in self.m_ESPAltherma_operation_mode:
             #     return True
 
-        elif self.m_USE_DAIKIN_API > 0:
-            if self._DaikinWP_WATER_turn_on:
-                return True
+        # elif self.m_USE_DAIKIN_API > 0:
+        #     if self._DaikinWP_WATER_turn_on:
+        #         return True
 
         return False
 
@@ -801,11 +822,11 @@ class ProcessBase(object):
             if self.m_ESPAltherma_DHW_tank_temp_R5T >= self.m_MIN_WATER_TEMPERATURE:
                 return False
 
-        elif self.m_USE_DAIKIN_API > 0:
-            # if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
-            #     return False
-            if self._DaikinWP_WATER_temperature >= self.m_MIN_WATER_TEMPERATURE:
-                return False
+        # elif self.m_USE_DAIKIN_API > 0:
+        #     # if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
+        #     #     return False
+        #     if self._DaikinWP_WATER_temperature >= self.m_MIN_WATER_TEMPERATURE:
+        #         return False
 
         return start_WaterOn
 
@@ -822,19 +843,19 @@ class ProcessBase(object):
                     self.m_ESPAltherma_DHW_tank_temp_R5T
                 )
 
-            elif self.m_USE_DAIKIN_API > 0:
-                self._DaikinWP_WATER_target_temperature_Saved = (
-                    self._DaikinWP_WATER_target_temperature
-                )
-                WATER_max_temp = self._DaikinWP_WATER_temperature + 5
+            # elif self.m_USE_DAIKIN_API > 0:
+            #     self._DaikinWP_WATER_target_temperature_Saved = (
+            #         self._DaikinWP_WATER_target_temperature
+            #     )
+            #     WATER_max_temp = self._DaikinWP_WATER_temperature + 5
 
-                execute = self.m_DaikinWP.set_WATER_tank_state("performance")
-                logger.info(f"doProcess_ControlDaikinWater: activate performance Mode")
+            #     execute = self.m_DaikinWP.set_WATER_tank_state("performance")
+            #     logger.info(f"doProcess_ControlDaikinWater: activate performance Mode")
 
-                execute = self.m_DaikinWP.set_WATER_target_temperature(WATER_max_temp)
-                logger.info(
-                    f"doProcess_ControlDaikinWater: set_WATER_target_temperature({WATER_max_temp})"
-                )
+            #     execute = self.m_DaikinWP.set_WATER_target_temperature(WATER_max_temp)
+            #     logger.info(
+            #         f"doProcess_ControlDaikinWater: set_WATER_target_temperature({WATER_max_temp})"
+            #     )
 
         self.m_GPIODevice.set_enableHeating(True)
 
@@ -847,23 +868,23 @@ class ProcessBase(object):
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             logger.info(f"doProcess_ControlDaikinWater: deactivate Smart Grid")
 
-        elif self.m_USE_DAIKIN_API > 0:
-            if (
-                self._DaikinWP_WATER_target_temperature_Saved
-                != self._DaikinWP_WATER_target_temperature
-            ):
-                execute = self.m_DaikinWP.set_WATER_target_temperature(
-                    self._DaikinWP_WATER_target_temperature_Saved
-                )
-                logger.info(
-                    f"doProcess_ControlDaikinWater: set_WATER_target_temperature({self._DaikinWP_WATER_target_temperature_Saved})"
-                )
+        # elif self.m_USE_DAIKIN_API > 0:
+        #     if (
+        #         self._DaikinWP_WATER_target_temperature_Saved
+        #         != self._DaikinWP_WATER_target_temperature
+        #     ):
+        #         execute = self.m_DaikinWP.set_WATER_target_temperature(
+        #             self._DaikinWP_WATER_target_temperature_Saved
+        #         )
+        #         logger.info(
+        #             f"doProcess_ControlDaikinWater: set_WATER_target_temperature({self._DaikinWP_WATER_target_temperature_Saved})"
+        #         )
 
-            if self._DaikinWP_WATER_tank_state == "performance":
-                execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
-                logger.info(
-                    f"doProcess_ControlDaikinWater: deactivate performance Mode"
-                )
+        #     if self._DaikinWP_WATER_tank_state == "performance":
+        #         execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
+        #         logger.info(
+        #             f"doProcess_ControlDaikinWater: deactivate performance Mode"
+        #         )
 
         self.m_GPIODevice.set_enableHeating(False)
 
@@ -881,17 +902,6 @@ class ProcessBase(object):
                     f"doProcess_ControlDaikinWater: Water-Temp. {self.m_ESPAltherma_DHW_tank_temp_R5T} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel"
                 )
                 self._DaikinWP_WATER_Cancel_from_WP = True
-
-        elif self.m_USE_DAIKIN_API > 0:
-            if self._DaikinWP_WATER_temperature >= self.m_MAX_WATER_TEMPERATURE:
-                doCancel = True
-                logger.info(
-                    f"doProcess_ControlDaikinWater: Water-Temp. {self._DaikinWP_WATER_temperature} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel"
-                )
-                self._DaikinWP_WATER_Cancel_from_WP = True
-
-                # bei iaktivem Smart-Grid:
-                # 'Abschalten', wenn Wasser-Temperatur Target-Temperatur ist
 
             if not self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
                 if self._DaikinWP_WATER_tank_state != "performance":
@@ -1032,10 +1042,7 @@ class ProcessBase(object):
     def doProcess_ControlDaikinWP(self, timestamp):
 
         doProcessDaikin: bool = (
-            (self.m_USE_DAIKIN_API > 0 and self.m_DevicedoProcessing["DaikinWP"] )
-            or (
-                self.m_USE_ALTHERMA_API > 0 and self.m_DevicedoProcessing["ESPAltherma"] 
-            )
+            (self.m_USE_ALTHERMA_API > 0 and self.m_DevicedoProcessing["ESPAltherma"])
             and self.m_DevicedoProcessing["SPH_TL3_BH_UP"]
             and self.m_DevicedoProcessing["SDM630_WP"]
             and self.m_DevicedoProcessing["SDM630_WR"]
@@ -1133,7 +1140,7 @@ class ProcessBase(object):
         # all new day get sunrise/sunset time
         if self.m_lastday != actualday:
             #  4 hour after midnight-> time shift between raspi and server
-            if timestamp.hour >= 3 and timestamp.hour <= 4:
+            if timestamp.hour >= 1 and timestamp.hour <= 2:
                 self.getsunrise_sunsetTime()
                 self.doinitialstateDaikinWater()
                 self.m_lastday = actualday
@@ -1152,16 +1159,16 @@ class ProcessBase(object):
                 "is_PVSurplus": self.m_GPIODevice.is_PVSurplus(),
                 "is_WPClimateOn": self.m_GPIODevice.is_WPClimateOn(),
                 "SPH_TL3_BH_UP_OnOff": self._SPH_TL3_BH_UP_OnOff,
-                "DaikinWP_WATER_turn_on": self._DaikinWP_WATER_turn_on,
-                "DaikinWP_CLIMATE_turn_on": self._DaikinWP_CLIMATE_turn_on,
+                # "DaikinWP_WATER_turn_on": self._DaikinWP_WATER_turn_on,
+                # "DaikinWP_CLIMATE_turn_on": self._DaikinWP_CLIMATE_turn_on,
                 "SPH_TL3_BH_UP_Inverter_Status": self._SPH_TL3_BH_UP_Inverter_Status,
-                "DaikinWP_WATER_tank_state": self._DaikinWP_WATER_tank_state,
-                "DaikinWP_WATER_temperature": self._DaikinWP_WATER_temperature,
-                "DaikinWP_CLIMATE_temperature": self._DaikinWP_CLIMATE_temperature,
-                "DaikinWP_WATER_target_temperature": self._DaikinWP_WATER_target_temperature,
-                "DaikinWP_CLIMATE_target_temperature": self._DaikinWP_CLIMATE_target_temperature,
-                "DaikinWP_Sensor_OutsideTemperature": self._DaikinWP_Sensor_OutsideTemperature,
-                "DaikinWP_Sensor_LeavingWaterTemperatur": self._DaikinWP_Sensor_LeavingWaterTemperatur,
+                # "DaikinWP_WATER_tank_state": self._DaikinWP_WATER_tank_state,
+                # "DaikinWP_WATER_temperature": self._DaikinWP_WATER_temperature,
+                # "DaikinWP_CLIMATE_temperature": self._DaikinWP_CLIMATE_temperature,
+                # "DaikinWP_WATER_target_temperature": self._DaikinWP_WATER_target_temperature,
+                # "DaikinWP_CLIMATE_target_temperature": self._DaikinWP_CLIMATE_target_temperature,
+                # "DaikinWP_Sensor_OutsideTemperature": self._DaikinWP_Sensor_OutsideTemperature,
+                # "DaikinWP_Sensor_LeavingWaterTemperatur": self._DaikinWP_Sensor_LeavingWaterTemperatur,
                 "ESPAltherma_INV_Heat_Energy": self.m_ESPAltherma_INV_Heat_Energy,
                 "ESPAltherma_INV_DHW_Energy": self.m_ESPAltherma_INV_DHW_Energy,
                 "ESPAltherma_INV_Heat_COP": self.m_ESPAltherma_INV_Heat_COP,
@@ -1181,7 +1188,7 @@ class ProcessBase(object):
                 "ESPAltherma_Water_pressure": self.m_ESPAltherma_Water_pressure,
                 "ESPAltherma_Flow_sensor_l_min_average": self.m_ESPAltherma_Flow_sensor_l_min_average.get_avg(),
                 "ESPAltherma_INV_primary_current_average": self.m_ESPAltherma_INV_primary_current_average.get_avg(),
-                "WP_WATER_consume_energy":self.WP_WATER_consume_energy,
+                "WP_WATER_consume_energy": self.WP_WATER_consume_energy,
                 "sunrise": (
                     ""
                     if self.m_today_sr == None
@@ -1194,7 +1201,7 @@ class ProcessBase(object):
                 ),
             }
 
-            self.doPublishPayload(payload)
+            self.doPublishPayload(payload, retained=True)
 
             self.m_TimeSpan.setActTime(timestamp)
 
@@ -1217,8 +1224,8 @@ class ProcessBase(object):
         if "kebaWallbox" in self.m_useddevices:
             self.m_kebaWallbox = self.m_useddevices["kebaWallbox"]
 
-        if "DaikinWP" in self.m_useddevices:
-            self.m_DaikinWP = self.m_useddevices["DaikinWP"]
+        # if "DaikinWP" in self.m_useddevices:
+        #     self.m_DaikinWP = self.m_useddevices["DaikinWP"]
 
         if "ESPAltherma" in self.m_useddevices:
             self.m_ESPAltherma = self.m_useddevices["ESPAltherma"]
