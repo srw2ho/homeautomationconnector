@@ -279,6 +279,7 @@ class ProcessBase(object):
             self.m_today_sr = sun.get_sunrise_time().astimezone()
             self.m_today_ss = sun.get_sunset_time().astimezone()
 
+            
             # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
                 logger.info(
@@ -1139,8 +1140,8 @@ class ProcessBase(object):
 
         # all new day get sunrise/sunset time
         if self.m_lastday != actualday:
-            #  4 hour after midnight-> time shift between raspi and server
-            if timestamp.hour >= 1 and timestamp.hour <= 2:
+            #  3 hour after midnight-> time shift between raspi and server
+            if timestamp.hour >= 3 and timestamp.hour <= 4:
                 self.getsunrise_sunsetTime()
                 self.doinitialstateDaikinWater()
                 self.m_lastday = actualday
