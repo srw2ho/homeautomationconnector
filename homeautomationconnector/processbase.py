@@ -24,6 +24,7 @@ from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 from suntime import Sun, SunTimeException
 
 
+
 SERVICE_DEVICE_NAME = "homemqttservice"
 SERVICE_DEVICE_NETID = "homeconnector"
 DEVICE_TYPE_CTRL = "homeconnector"
@@ -271,15 +272,21 @@ class ProcessBase(object):
 
     def getsunrise_sunsetTime(self):
         try:
+            
+            # get_timestamp = datetime.now(timezone.utc).astimezone()
+
+            
             get_timestamp = datetime.now(timezone.utc).astimezone()
 
             sun = Sun(self.m_LOCAL_LATIDUDE, self.m_LOCAL_LONGITUDE)
 
             # Get today's sunrise and sunset in UTC
-            self.m_today_sr = sun.get_sunrise_time().astimezone()
-            self.m_today_ss = sun.get_sunset_time().astimezone()
-
+            # BugFixing Sunset Time  one day behind Sunrise Time is wrong
             
+            self.m_today_sr = sun.get_sunrise_time(at_date=get_timestamp).astimezone()
+            self.m_today_ss = sun.get_sunset_time(at_date=get_timestamp).astimezone()
+
+
             # workaround bugfix: m_today_ss is one day before
             if self.m_today_sr > self.m_today_ss:
                 logger.info(
@@ -308,7 +315,7 @@ class ProcessBase(object):
             # self.m_today_sr = sun.get_sunrise_time()
             # self.m_today_ss = sun.get_sunset_time()
             logger.info(
-                f"getsunrise_sunsetTime: sunrise time: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} sunset time:{self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')}"
+                f"getsunrise_sunsetTime: actual time: {get_timestamp.strftime('%m/%d/%Y, %H:%M:%S')} sunrise time: {self.m_today_sr.strftime('%m/%d/%Y, %H:%M:%S')} sunset time:{self.m_today_ss.strftime('%m/%d/%Y, %H:%M:%S')}"
             )
         except SunTimeException as e:
             self.m_today_sr = None
