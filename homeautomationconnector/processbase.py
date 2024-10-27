@@ -269,6 +269,8 @@ class ProcessBase(object):
             self.m_DevicedoProcessing[key] = False
 
         self.getsunrise_sunsetTime()
+        
+        self.check_forCancel_Water_Heating()
 
     def getsunrise_sunsetTime(self):
         try:
@@ -788,6 +790,8 @@ class ProcessBase(object):
             # DHW
             # Heating
             # Stop
+            
+            ret:bool = True
 
             if "DHW" in self.m_ESPAltherma_I_U_operation_mode:
                 return True
@@ -796,19 +800,13 @@ class ProcessBase(object):
                 return True
 
             if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
-                # if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
-                return False
-                # else: return True
+                # return False
+                if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
+                    return False
+                else: return True
 
-            # if "Heating" in self.m_ESPAltherma_operation_mode:
-            #     return True
-
-            # if "DWH" in self.m_ESPAltherma_operation_mode:
-            #     return True
-
-            # if "Fan Only" in self.m_ESPAltherma_operation_mode:
-            #     return True
-
+            return ret
+            
         # elif self.m_USE_DAIKIN_API > 0:
         #     if self._DaikinWP_WATER_turn_on:
         #         return True
@@ -830,11 +828,6 @@ class ProcessBase(object):
             if self.m_ESPAltherma_DHW_tank_temp_R5T >= self.m_MIN_WATER_TEMPERATURE:
                 return False
 
-        # elif self.m_USE_DAIKIN_API > 0:
-        #     # if self._DaikinWP_WATER_temperature >= self.m_DaikinWP.get_WATER_max_temp():
-        #     #     return False
-        #     if self._DaikinWP_WATER_temperature >= self.m_MIN_WATER_TEMPERATURE:
-        #         return False
 
         return start_WaterOn
 
@@ -847,23 +840,8 @@ class ProcessBase(object):
 
         else:
             if self.m_USE_ALTHERMA_API > 0:
-                self._DaikinWP_WATER_target_temperature_Saved = (
-                    self.m_ESPAltherma_DHW_tank_temp_R5T
-                )
+                self._DaikinWP_WATER_target_temperature_Saved = self.m_ESPAltherma_DHW_tank_temp_R5T
 
-            # elif self.m_USE_DAIKIN_API > 0:
-            #     self._DaikinWP_WATER_target_temperature_Saved = (
-            #         self._DaikinWP_WATER_target_temperature
-            #     )
-            #     WATER_max_temp = self._DaikinWP_WATER_temperature + 5
-
-            #     execute = self.m_DaikinWP.set_WATER_tank_state("performance")
-            #     logger.info(f"doProcess_ControlDaikinWater: activate performance Mode")
-
-            #     execute = self.m_DaikinWP.set_WATER_target_temperature(WATER_max_temp)
-            #     logger.info(
-            #         f"doProcess_ControlDaikinWater: set_WATER_target_temperature({WATER_max_temp})"
-            #     )
 
         self.m_GPIODevice.set_enableHeating(True)
 
@@ -876,57 +854,19 @@ class ProcessBase(object):
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             logger.info(f"doProcess_ControlDaikinWater: deactivate Smart Grid")
 
-        # elif self.m_USE_DAIKIN_API > 0:
-        #     if (
-        #         self._DaikinWP_WATER_target_temperature_Saved
-        #         != self._DaikinWP_WATER_target_temperature
-        #     ):
-        #         execute = self.m_DaikinWP.set_WATER_target_temperature(
-        #             self._DaikinWP_WATER_target_temperature_Saved
-        #         )
-        #         logger.info(
-        #             f"doProcess_ControlDaikinWater: set_WATER_target_temperature({self._DaikinWP_WATER_target_temperature_Saved})"
-        #         )
-
-        #     if self._DaikinWP_WATER_tank_state == "performance":
-        #         execute = self.m_DaikinWP.set_WATER_tank_state("heat_pump")
-        #         logger.info(
-        #             f"doProcess_ControlDaikinWater: deactivate performance Mode"
-        #         )
 
         self.m_GPIODevice.set_enableHeating(False)
 
     def check_forCancel_Water_Heating(self) -> bool:
         difference = self.m_TimeSpan_Daikin_Control_Water.getTimeSpantoActTime()
-        difference_secs = self.m_TimeSpan_Daikin_Control_Water.getTimediffernceintoSecs(
-            difference
-        )
-        doCancel = False
+        difference_secs = self.m_TimeSpan_Daikin_Control_Water.getTimediffernceintoSecs(difference)
+        doCancel:bool = False
 
         if self.m_USE_ALTHERMA_API > 0:
             if self.m_ESPAltherma_DHW_tank_temp_R5T >= self.m_MAX_WATER_TEMPERATURE:
                 doCancel = False
-                logger.info(
-                    f"doProcess_ControlDaikinWater: Water-Temp. {self.m_ESPAltherma_DHW_tank_temp_R5T} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel"
-                )
+                logger.info(f"doProcess_ControlDaikinWater: Water-Temp. {self.m_ESPAltherma_DHW_tank_temp_R5T} >= Water-Target-Temp. {self.m_MAX_WATER_TEMPERATURE} -> Cancel")
                 self._DaikinWP_WATER_Cancel_from_WP = True
-
-            if not self.m_DAIKIN_USE_SMARTGRID_CONTACTS:
-                if self._DaikinWP_WATER_tank_state != "performance":
-                    doCancel = True
-                    logger.info(
-                        f"doProcess_ControlDaikinWater: Switch Off Performance-Mode"
-                    )
-
-                if (
-                    self._DaikinWP_WATER_temperature
-                    >= self._DaikinWP_WATER_target_temperature
-                ):
-                    logger.info(
-                        f"doProcess_ControlDaikinWater: Water-Temp. {self._DaikinWP_WATER_temperature} >= Water-Target-Temp. {self._DaikinWP_WATER_target_temperature} -> Cancel"
-                    )
-                    self._DaikinWP_WATER_Cancel_from_WP = True
-                    doCancel = True
 
             if doCancel:
                 return True
@@ -947,13 +887,8 @@ class ProcessBase(object):
                 self._DaikinWP_WATER_Cancel_from_WP = True
                 doCancel = True
             else:
-                # if actpowerWR < 100 or self._SPH_TL3_BH_UP_Pactouser_total > 100:
                 if self._availablepowerWR < 100:
-
-                    if (
-                        self.WP_WATER_consume_energy
-                        >= self.m_PV_MIN_WATER_CONSUME_ENERGY
-                    ):
+                    if self.WP_WATER_consume_energy >= self.m_PV_MIN_WATER_CONSUME_ENERGY:
                         doCancel = True
                         logger.info(
                             f"doProcess_ControlDaikinWater: actual available WR Power :{self._availablepowerWR } < 100 Watt -> Cancel"
@@ -1019,7 +954,8 @@ class ProcessBase(object):
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
                 elif self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
-
+                    doCancel:bool = False
+                    
                     self.WP_WATER_consume_energy = (
                         self._SDM630_WP_import_energy_active
                         - self._SDM630_WP_start_import_energy_active
@@ -1038,6 +974,8 @@ class ProcessBase(object):
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
         if not is_ProcessingActiv:
+            if self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
+                logger.info(f"doProcess_ControlDaikinWater: ProcessingActiv: {is_ProcessingActiv} turn_on_state:{self._DaikinWP_WATER_turn_onState} " )
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             self.m_GPIODevice.set_enableHeating(False)
