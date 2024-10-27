@@ -331,6 +331,7 @@ class ProcessBase(object):
             if hostname == "SPH_TL3_BH_UP":
                 self._SPH_TL3_BH_UP_Pactogrid_total_average.reset()
                 self._SPH_TL3_BH_UP_Pdischarge1_average.reset()
+               
 
             if hostname == "SDM630_WR":
                 self._SDM630_WR_total_power_active_average.reset()
@@ -348,8 +349,8 @@ class ProcessBase(object):
             self.m_DevicedoProcessing[hostname] = False
             # self.m_mqttDeviceClient.unsubscribeallTopics()
 
-    #   sdm630Device = SDM630Device("SDM630_1", mqttServiceDeviceClient)
-    #     growattDevice = GrowattDevice("SDM630_1", mqttServiceDeviceClient)
+        logger.error(f"notifyInfoStateFunction Device: {hostname} infostate: {infostate}")
+
 
     def getProcessValues(self):
 
@@ -625,10 +626,10 @@ class ProcessBase(object):
         self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
         self.m_GPIODevice.set_enableHeating(False)
 
-    def doUnProcess_DaikinWP(self):
-        self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
-        self.m_GPIODevice.set_enableHeating(False)
-        self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
+    # def doUnProcess_DaikinWP(self):
+    #     self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
+    #     self.m_GPIODevice.set_enableHeating(False)
+    #     self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
     def doProcess_SPH_TL3_BH_UP(self):
         if self.m_SPH_TL3_BH_UP != None:
@@ -974,8 +975,7 @@ class ProcessBase(object):
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
         if not is_ProcessingActiv:
-            if self._DaikinWP_WATER_turn_onState == SwitchONOff.ON:
-                logger.info(f"doProcess_ControlDaikinWater: ProcessingActiv: {is_ProcessingActiv} turn_on_state:{self._DaikinWP_WATER_turn_onState} " )
+            logger.info(f"doProcess_ControlDaikinWater: ProcessingActiv: {is_ProcessingActiv} turn_on_state:{self._DaikinWP_WATER_turn_onState} " )
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             self.m_GPIODevice.set_enableHeating(False)
@@ -996,9 +996,12 @@ class ProcessBase(object):
 
         if doProcessDaikin:
             self.doProcess_ControlDaikinWater(timestamp)
-            self.doProcess_ControlDaikinClimate(timestamp)
+            # self.doProcess_ControlDaikinClimate(timestamp)
         else:
-            self.doUnProcess_DaikinWP()
+            # WP Smart-Grid Process beenden können
+            if self._DaikinWP_WATER_turn_onState != SwitchONOff.ON:
+                self.doinitialstateDaikinWater()
+
 
     def getTopicByKey(self, key: str) -> str:
         topic = f"mh/{SERVICE_DEVICE_NAME}/{SERVICE_DEVICE_NETID}/data/{key}"
@@ -1064,11 +1067,6 @@ class ProcessBase(object):
         self._SDM630_WP_start_import_energy_active = 0.0
         self.WP_WATER_consume_energy = 0.0
         self._DaikinWP_WATER_Cancel_from_WP = False
-        # self._SPH_TL3_BH_UP_Pactogrid_total_average.reset()
-        # self._SPH_TL3_BH_UP_Pdischarge1_average.reset()
-
-        # self._SDM630_WR_total_power_active_average.reset()
-        # self._SDM630_WP_total_power_active_average.reset()
         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
     def doProcess(self):
@@ -1105,6 +1103,7 @@ class ProcessBase(object):
                 "is_PVSurplus": self.m_GPIODevice.is_PVSurplus(),
                 "is_WPClimateOn": self.m_GPIODevice.is_WPClimateOn(),
                 "SPH_TL3_BH_UP_OnOff": self._SPH_TL3_BH_UP_OnOff,
+                "DaikinWP_WATER_turn_onState":self._DaikinWP_WATER_turn_onState.value,
                 # "DaikinWP_WATER_turn_on": self._DaikinWP_WATER_turn_on,
                 # "DaikinWP_CLIMATE_turn_on": self._DaikinWP_CLIMATE_turn_on,
                 "SPH_TL3_BH_UP_Inverter_Status": self._SPH_TL3_BH_UP_Inverter_Status,
