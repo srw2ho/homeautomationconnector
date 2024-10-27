@@ -349,7 +349,7 @@ class ProcessBase(object):
             self.m_DevicedoProcessing[hostname] = False
             # self.m_mqttDeviceClient.unsubscribeallTopics()
 
-        logger.error(f"notifyInfoStateFunction Device: {hostname} infostate: {infostate}")
+        logger.info(f"notifyInfoStateFunction Device: {hostname} infostate: {infostate}")
 
 
     def getProcessValues(self):
