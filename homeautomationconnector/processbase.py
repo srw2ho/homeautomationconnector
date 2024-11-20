@@ -801,10 +801,10 @@ class ProcessBase(object):
                 return True
 
             if "Stop" in self.m_ESPAltherma_I_U_operation_mode:
-                # return False
-                if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
-                    return False
-                else: return True
+                return False
+                # if self._DaikinWP_WATER_turn_onState == SwitchONOff.OFF:
+                #     return False
+                # else: return True
 
             return ret
             
@@ -975,7 +975,7 @@ class ProcessBase(object):
                         self._DaikinWP_WATER_turn_onState = SwitchONOff.OFF
 
         if not is_ProcessingActiv:
-            logger.info(f"doProcess_ControlDaikinWater: ProcessingActiv: {is_ProcessingActiv} turn_on_state:{self._DaikinWP_WATER_turn_onState} " )
+            logger.info(f"doProcess_ControlDaikinWater: ProcessingActiv: {is_ProcessingActiv} turn_on_state:{self._DaikinWP_WATER_turn_onState.value} " )
             # disable Smart-Grid
             self.m_GPIODevice.switch_SmartGridWP(state_grid_1=0, state_grid_2=0)
             self.m_GPIODevice.set_enableHeating(False)
@@ -998,9 +998,10 @@ class ProcessBase(object):
             self.doProcess_ControlDaikinWater(timestamp)
             # self.doProcess_ControlDaikinClimate(timestamp)
         else:
+            pass
             # WP Smart-Grid Process beenden können
-            if self._DaikinWP_WATER_turn_onState != SwitchONOff.ON:
-                self.doinitialstateDaikinWater()
+            # if self._DaikinWP_WATER_turn_onState != SwitchONOff.ON:
+            #     self.doinitialstateDaikinWater()
 
 
     def getTopicByKey(self, key: str) -> str:
