@@ -270,7 +270,7 @@ class ProcessBase(object):
 
         self.getsunrise_sunsetTime()
         
-        self.check_forCancel_Water_Heating()
+
 
     def getsunrise_sunsetTime(self):
         try:
