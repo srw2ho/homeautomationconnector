@@ -936,12 +936,12 @@ class ProcessBase(object):
                             if start_WaterOn:
                                 self.start_Water_Heating()
 
-                                # self._SDM630_WP_start_import_energy_active = self._SDM630_WP_import_energy_active
+                                self._SDM630_WP_start_import_energy_active = self._SDM630_WP_import_energy_active
 
-                                self._SDM630_WP_start_import_energy_active = (
-                                    self.WP_WATER_consume_energy
-                                    + self._SDM630_WP_import_energy_active
-                                )
+                                # self._SDM630_WP_start_import_energy_active = (
+                                #     self.WP_WATER_consume_energy
+                                #     + self._SDM630_WP_import_energy_active
+                                # )
 
                                 self.m_TimeSpan_Daikin_Control_Water.setActTime(
                                     timestamp
@@ -1135,6 +1135,8 @@ class ProcessBase(object):
                 "ESPAltherma_Flow_sensor_l_min_average": self.m_ESPAltherma_Flow_sensor_l_min_average.get_avg(),
                 "ESPAltherma_INV_primary_current_average": self.m_ESPAltherma_INV_primary_current_average.get_avg(),
                 "WP_WATER_consume_energy": self.WP_WATER_consume_energy,
+                "PV_MIN_WATER_CONSUME_ENERGY": self.m_PV_MIN_WATER_CONSUME_ENERGY,
+                "PV_MAX_WATER_CONSUME_ENERGY": self.m_PV_MAX_WATER_CONSUME_ENERGY,
                 "sunrise": (
                     ""
                     if self.m_today_sr == None
