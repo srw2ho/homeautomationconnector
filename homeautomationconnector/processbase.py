@@ -19,6 +19,7 @@ from ppmpmessage.convertor.simple_variables import SimpleVariables
 from homeautomationconnector.growattdevice.growattdevice import GrowattDevice
 from homeautomationconnector.helpers.flyingaverage import FlyingAverage
 from homeautomationconnector.helpers.timespan import TimeSpan
+from homeautomationconnector.kebawallboxdevice.kebawallboxcontrol import KebaWallboxControl
 from homeautomationconnector.kebawallboxdevice.keykontactP30 import KeykontactP30
 from homeautomationconnector.sdmdevice.sdmdevice import SDM630Device
 from suntime import Sun, SunTimeException
@@ -78,7 +79,7 @@ class ProcessBase(object):
         self.m_SDM630_WP: SDM630Device = None
         self.m_SDM630_WB: SDM630Device = None
         self.m_SPH_TL3_BH_UP: GrowattDevice = None
-        self.m_kebaWallbox: KeykontactP30 = None
+        self.m_KeContactP30: KeykontactP30 = None
         # self.m_DaikinWP: DaikinDevice = None
         self.m_ESPAltherma: ESPAltherma = None
         self.m_tomlParser = tomlParser
@@ -94,7 +95,11 @@ class ProcessBase(object):
         self.m_GPIODevice: GPIODeviceHomeAutomation = GPIODeviceHomeAutomation(
             "GPIODevice", tomlParser
         )
+ 
 
+        self.m_KebaWallboxControl: KebaWallboxControl = KebaWallboxControl("keykontactP30", tomlParser,self.m_KeContactP30)
+       
+            
         self._DaikinWP_WATER_target_temperature_Saved = 0
         self._SDM630_WP_start_import_energy_active = 0.0
         self._availablepowerWR = 0.0
@@ -611,13 +616,14 @@ class ProcessBase(object):
         #         self.m_DaikinWP.get_Sensor_LeavingWaterTemperature()
         #     )
 
-        if self.m_kebaWallbox != None and self.m_DevicedoProcessing["kebaWallbox"]:
+        if self.m_KeContactP30 != None and self.m_DevicedoProcessing["KEBA_P30"]:
 
             pass
 
-    def doProcess_KebaWallbox(self):
-        if self.m_kebaWallbox != None:
-            if not self.m_DevicedoProcessing["kebaWallbox"]:
+    def doProcess_KeContactP30(self):
+        if self.m_KeContactP30 != None:
+            if  self.m_DevicedoProcessing["KEBA_P30"]:
+                self.m_KebaWallboxControl.do_process(0)
                 return
         pass
 
@@ -1098,6 +1104,8 @@ class ProcessBase(object):
             self.doProcess_SPH_TL3_BH_UP()
 
             self.doProcess_ControlDaikinWP(timestamp)
+            
+            self.doProcess_KeContactP30()
 
             payload = {
                 "CPU_Temperature": self.m_GPIODevice.getCpuTemperature(),
@@ -1169,8 +1177,9 @@ class ProcessBase(object):
         if "SPH_TL3_BH_UP" in self.m_useddevices:
             self.m_SPH_TL3_BH_UP = self.m_useddevices["SPH_TL3_BH_UP"]
 
-        if "kebaWallbox" in self.m_useddevices:
-            self.m_kebaWallbox = self.m_useddevices["kebaWallbox"]
+        if "KEBA_P30" in self.m_useddevices:
+            self.m_KeContactP30 = self.m_useddevices["KEBA_P30"]
+            self.m_KebaWallboxControl.set_KebaWallboxDeviceClient(self.m_KeContactP30)
 
         # if "DaikinWP" in self.m_useddevices:
         #     self.m_DaikinWP = self.m_useddevices["DaikinWP"]

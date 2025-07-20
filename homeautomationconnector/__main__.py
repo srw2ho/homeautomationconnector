@@ -138,8 +138,8 @@ def createDeviceByKey(
         SPH_TL3_BH_UP = GrowattDevice("SPH_TL3_BH_UP", mqttServiceDeviceClient)
         return SPH_TL3_BH_UP
     # Wallbox SDM
-    if key == "kebaWallbox":
-        kebaWallbox = KeykontactP30("kebaWallbox", mqttServiceDeviceClient)
+    if key == "KEBA_P30":
+        kebaWallbox = KeykontactP30("KEBA_P30", mqttServiceDeviceClient)
         return kebaWallbox
     if key == "DaikinWP":
         DaikinWP = DaikinDevice("DaikinWP", mqttServiceDeviceClient)
@@ -148,6 +148,7 @@ def createDeviceByKey(
     if key == "ESPAltherma":
         espAltherma = ESPAltherma("ESPAltherma", mqttServiceDeviceClient)
         return espAltherma
+
     
     return None
 

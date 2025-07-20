@@ -222,9 +222,9 @@ class KeykontactP30(ModBusDeviceBase):
 
         return ret
 
-    def set_Set_Phase_Switch_Toggle(self, value) -> int:
+    def set_Set_Phase_Switch_Source(self, value) -> int:
         ret = self.m_mqttDeviceClient.writeValueByKey(
-            key=self.getKeyByDeviceName("Set_Phase_Switch_Toggle"),
+            key=self.getKeyByDeviceName("Set_Phase_Switch_Source"),
             value=value,
             withNotify=self.m_writewithNotify,
         )
@@ -233,7 +233,7 @@ class KeykontactP30(ModBusDeviceBase):
 
     def set_Trigger_Phase_Switch(self, value) -> int:
         ret = self.m_mqttDeviceClient.writeValueByKey(
-            key=self.getKeyByDeviceName("Set_Phase_Switch_Toggle"),
+            key=self.getKeyByDeviceName("Set_Trigger_Phase_Switch"),
             value=value,
             withNotify=self.m_writewithNotify,
         )

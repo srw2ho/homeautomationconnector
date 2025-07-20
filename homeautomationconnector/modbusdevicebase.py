@@ -11,3 +11,6 @@ class ModBusDeviceBase(object):
 
     def getKeyByDeviceName(self, key) -> str:
         return f"@{self.m_deviceKey}.{key}"
+    
+    def getMQTTServiceDeviceClient(self) -> MQTTServiceDeviceClient:
+        return self.m_mqttDeviceClient
